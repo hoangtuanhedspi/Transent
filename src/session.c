@@ -1,5 +1,8 @@
 #include <session.h>
 
+Session sessions[SESSIONS];
+int no_sessions;
+
 Session *findSessionByConnfd (int connfd) {
     int i;
     for (i = 0; i < SESSIONS; i++) {
