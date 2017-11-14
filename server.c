@@ -17,6 +17,10 @@
 /* Process command from client end return */
 void process(struct pollfd *po);
 
+/* Close a connection */
+void closeConnection (struct pollfd *po, Session *ss);
+
+/* Check arguments is valid or not */
 void validArguments (int argc, char *argv[], int *port);
 
 int no_sessions = 0;
@@ -120,30 +124,10 @@ void process(struct pollfd *po) {
 	bytes_received = recv(connfd, recv_data, BUFF_SIZE - 1, 0); // blocking
 	if (bytes_received < 0) {
 		perror("\nError: ");
-		close(connfd);						// Close connection
-
-		/* Remove from sessions */
-		if (removeSession(ss) == 0) {
-			printf("Error: Can't remove session because don't exist session!\n");
-		}
-
-		/* Remove from polls */
-		if (removePoll(po) == 0) {
-			printf("Error: Can't remove poll because don't exist poll!\n");
-		}
+		closeConnection(po, ss);
 	} else if (bytes_received == 0) {
 		printf("Connection closed.\n");
-		close(connfd);						// Close connection
-
-		/* Remove from sessions */
-		if (removeSession(ss) == 0) {
-			printf("Error: Can't remove session because don't exist session!\n");
-		}
-
-		/* Remove from polls */
-		if (removePoll(po) == 0) {
-			printf("Error: Can't remove poll because don't exist poll!\n");
-		}
+		closeConnection(po, ss);
 	} else {
 		recv_data[bytes_received] = '\0';
 		printf("\nReceive: |%s|\n", recv_data);
@@ -153,6 +137,21 @@ void process(struct pollfd *po) {
 		bytes_sent = send(connfd, recv_data, bytes_received, 0);
 		if (bytes_sent < 0)
 			perror("\nError: ");
+	}
+}
+
+void closeConnection (struct pollfd *po, Session *ss) {
+	/* Close connection */
+	close(po->fd);
+
+	/* Remove from sessions */
+	if (removeSession(ss) == 0) {
+		printf("Error: Can't remove session because don't exist session!\n");
+	}
+
+	/* Remove from polls */
+	if (removePoll(po) == 0) {
+		printf("Error: Can't remove poll because don't exist poll!\n");
 	}
 }
 
