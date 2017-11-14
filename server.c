@@ -9,8 +9,6 @@
 #include "session.h"
 #include "mypoll.h"
 
-#define USER_FILE "account.txt"
-
 #define BACKLOG 100  	 		/* Number of allowed connections */
 #define BUFF_SIZE 2048
 
@@ -23,13 +21,7 @@ void closeConnection (struct pollfd *po, Session *ss);
 /* Check arguments is valid or not */
 void validArguments (int argc, char *argv[], int *port);
 
-int no_sessions = 0;
-Session sessions[SESSIONS];
-
 int main(int argc, char *argv[]) {
-	// Read list-user from file
-	// readUser(USER_FILE);
-
 	int port = 0;
 	// checking arguments
 	validArguments(argc, argv, &port);

@@ -13,8 +13,8 @@ typedef struct Session_ {
     int connfd;
 } Session;
 
-extern Session sessions[SESSIONS];
-extern int no_sessions;
+Session sessions[SESSIONS];
+int no_sessions;
 
 
 Session *findSessionByConnfd (int connfd);
