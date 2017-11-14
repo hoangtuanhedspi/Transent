@@ -1,4 +1,4 @@
-#include <mypoll.h>
+#include "mypoll.h"
 
 _Bool removePoll (struct pollfd *poll) {
     if (poll == NULL) return 0;
