@@ -1,4 +1,4 @@
-#include <directory.h>
+#include "directory.h"
 
 _Bool existFile (const char *path, const char *file) {
     DIR *d;
