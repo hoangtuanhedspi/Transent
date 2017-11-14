@@ -13,10 +13,6 @@ typedef struct Session_ {
     int connfd;
 } Session;
 
-Session sessions[SESSIONS];
-int no_sessions;
-
-
 Session *findSessionByConnfd (int connfd);
 _Bool newSession (struct sockaddr_in *cliaddr, int connfd);
 _Bool removeSession (Session *ss);

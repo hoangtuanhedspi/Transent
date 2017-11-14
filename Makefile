@@ -4,7 +4,7 @@ BUILDDIR := build
 BINDIR := bin
 SHAREDDIR := bin/lib
 TARGET := transent
-LIBS := libtransent.so
+LIBS := ./bin/lib/libtransent.a #libtransent.so
 SRCEXT := c
 SOURCES := $(shell find $(SRCDIR) -type f -name '*.$(SRCEXT)')
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
@@ -18,8 +18,9 @@ $(TARGET): transent.c
 	$(CC) $^ -o $(TARGET) $(LIB) $(INC)
 
 $(LIBS): $(OBJECTS)
-	if [ ! -d "$(SHAREDDIR)" ];then mkdir -p $(SHAREDDIR); fi
-	$(CC) -shared $^ -o bin/lib/$(LIBS) $(INC)
+	if [ ! -d "$(SHAREDDIR)" ];then mkdir -p $(SHAREDDIR); fi;
+	ar rcs $@ $(OBJECTS)
+	#$(CC) -shared -fpic $^ -o bin/lib/$(LIBS) $(INC)
 
 $(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT)
 	if [ ! -d "$(BUILDDIR)" ];then mkdir $(BUILDDIR); fi
@@ -29,15 +30,15 @@ $(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT)
 	#$(CC) $(CFLAGS) -c -o $@ $< $(INC)
 
 test:
-	$(CC) $(CFLAGS) tests/test.c $(INC) $(LIB) -o test
+	$(CC) $(CFLAGS) tests/test.c $(INC) $(LIBS) -o test
 
 lib: $(LIBS)
 
 client: client.c
-	$(CC) $^ -o $@ $(LIB) $(INC)
+	$(CC) $^ -o $@ $(LIBS) $(INC)
 
 server: server.c
-	$(CC) $^ -o $@ $(LIB) $(INC)
+	$(CC) $^ -o $@ $(LIBS) $(INC)
 
 clean:
 	$(RM) -r $(BUILDDIR) $(BINDIR) test *.o
