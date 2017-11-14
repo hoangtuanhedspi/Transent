@@ -1,13 +1,43 @@
-CC=gcc
-CFLAGS=-w -std=c99
+CC := gcc
+SRCDIR := src
+BUILDDIR := build
+BINDIR := bin
+SHAREDDIR := bin/lib
+TARGET := transent
+LIBS := libtransent.so
+SRCEXT := c
+SOURCES := $(shell find $(SRCDIR) -type f -name '*.$(SRCEXT)')
+OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
+CFLAGS := -w#-g
+LIB := -L./bin/lib -ltransent
+INC := -I./include
 
-all: server client
+all: $(LIBS) client server
 
-server: server.c session.c mypoll.c
-	$(CC) -o $@ $^ $(CFLAGS)
+$(TARGET): transent.o
+	$(CC) $^ -o $(TARGET) $(LIB) $(INC)
 
-client: client.c directory.c
-	$(CC) -o $@ $^ $(CFLAGS)
+$(LIBS): $(OBJECTS)
+	if [ ! -d "$(SHAREDDIR)" ];then mkdir -p $(SHAREDDIR); fi
+	$(CC) -shared $^ -o bin/lib/$(LIBS) $(INC)
 
-clean: *
-	rm -rf client server *.o
+$(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT)
+	if [ ! -d "$(BUILDDIR)" ];then mkdir $(BUILDDIR); fi
+	$(CC) $(CFLAGS) -c -o $@ $< $(INC)
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c -o $@ $< $(INC)
+
+test:
+	$(CC) $(CFLAGS) tests/test.c $(INC) $(LIB) -o test
+
+client: client.o
+	$(CC) $^ -o $@ $(LIB) $(INC)
+
+server: server.o
+	$(CC) $^ -o $@ $(LIB) $(INC)
+
+clean:
+	$(RM) -r $(BUILDDIR) $(BINDIR) test *.o
+	
+.PHONY: clean

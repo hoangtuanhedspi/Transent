@@ -42,13 +42,13 @@ int main(int argc, char *argv[]) {
 
 	while(1){
 		/* send message */
-		__fpurge(stdin);
+		//__fpurge(stdin);
 		printf("\nEnter a command: ");
 		bzero(buff, BUFF_SIZE);
 		fgets(buff, BUFF_SIZE, stdin);
 		buff[strlen(buff) - 1] = '\0';
 
-		if (wannaExit(buff)) return;
+		if (wannaExit(buff)) return 0;
 
 		msg_len = strlen(buff) + 1;
 		bytes_sent = send(client_sock, buff, msg_len, 0);
