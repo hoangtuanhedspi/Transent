@@ -1,3 +1,7 @@
+build
+bin
+test
 client
 server
 *.o
+.DS_Store
