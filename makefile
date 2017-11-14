@@ -12,9 +12,9 @@ CFLAGS := -w#-g
 LIB := -L./bin/lib -ltransent
 INC := -I./include
 
-all: $(LIBS) client server
+all: lib client server
 
-$(TARGET): transent.o
+$(TARGET): transent.c
 	$(CC) $^ -o $(TARGET) $(LIB) $(INC)
 
 $(LIBS): $(OBJECTS)
@@ -25,16 +25,18 @@ $(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT)
 	if [ ! -d "$(BUILDDIR)" ];then mkdir $(BUILDDIR); fi
 	$(CC) $(CFLAGS) -c -o $@ $< $(INC)
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c -o $@ $< $(INC)
+#%.o: %.c
+	#$(CC) $(CFLAGS) -c -o $@ $< $(INC)
 
 test:
 	$(CC) $(CFLAGS) tests/test.c $(INC) $(LIB) -o test
 
-client: client.o
+lib: $(LIBS)
+
+client: client.c
 	$(CC) $^ -o $@ $(LIB) $(INC)
 
-server: server.o
+server: server.c
 	$(CC) $^ -o $@ $(LIB) $(INC)
 
 clean:
