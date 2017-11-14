@@ -6,7 +6,7 @@ all: server client
 server: server.c session.c mypoll.c
 	$(CC) -o $@ $^ $(CFLAGS)
 
-client: client.c
+client: client.c directory.c
 	$(CC) -o $@ $^ $(CFLAGS)
 
 clean: *

@@ -6,6 +6,8 @@
 #include <sys/types.h>
 #include <string.h>
 
+#include "directory.h"
+
 #define BUFF_SIZE 2048
 
 /* Check arguments is valid or not. If valid ip -> *serv_ip, port -> &serv_port */
