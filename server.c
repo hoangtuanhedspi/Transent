@@ -12,6 +12,8 @@
 #define BACKLOG 100  	 		/* Number of allowed connections */
 #define BUFF_SIZE 2048
 
+Session sessions[SESSIONS];
+
 /* Process command from client end return */
 void process(struct pollfd *po);
 
@@ -125,10 +127,19 @@ void process(struct pollfd *po) {
 		printf("\nReceive: |%s|\n", recv_data);
 
 		/* Print list of client has file */
+
+		/* Send for all other client */
 		
-		bytes_sent = send(connfd, recv_data, bytes_received, 0);
-		if (bytes_sent < 0)
-			perror("\nError: ");
+		// Using pthread???
+		for (int i = 0; i < SESSIONS; i++) {
+			if (sessions[i].connfd != -1 && !isSameSession(sessions + i, ss)) {
+				printf("%d\n", sessions[i].connfd);
+				bytes_sent = send(sessions[i].connfd, recv_data, bytes_received, 0);
+				if (bytes_sent < 0)
+					perror("\nError: ");
+			}
+		}
+		
 	}
 }
 
@@ -155,12 +166,12 @@ void validArguments (int argc, char *argv[], int *port) {
 		for (i = 0; port_str[i] != '\0'; i++) {
 			if (!isdigit(port_str[i])) {
 				printf("Port is invalid\n");
-				// exit(EXIT_FAILURE);
+				exit(EXIT_FAILURE);
 			}
 		}
 		if (port_str[i] == '\0') *port = atoi(port_str);
 	} else {
 		printf("(ERROR) To few arguments!\n");
-		// exit(EXIT_FAILURE);
+		exit(EXIT_FAILURE);
 	}
 }
