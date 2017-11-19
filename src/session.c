@@ -1,8 +1,5 @@
 #include "session.h"
 
-Session sessions[SESSIONS];
-int no_sessions;
-
 Session *findSessionByConnfd (int connfd) {
     int i;
     for (i = 0; i < SESSIONS; i++) {
@@ -44,7 +41,9 @@ _Bool removeSession (Session *ss) {
 }
 
 _Bool isSameSession (Session *ss1, Session *ss2) {
-    if (isEqualSockAddrIn(ss1->cliaddr, ss2->cliaddr) && ss1->connfd == ss2->connfd)
+    if (ss1 == NULL || ss2 == NULL) {
+        return 0;
+    } else if (isEqualSockAddrIn(ss1->cliaddr, ss2->cliaddr) && ss1->connfd == ss2->connfd)
         return 1;
     else
         return 0; 
