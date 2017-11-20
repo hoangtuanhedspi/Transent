@@ -6,11 +6,17 @@
 #include <strings.h>
 #include <ctype.h>
 
+#define DEBUG 1
+#include<transent/util.h>
 #include <transent/session.h>
 #include <transent/mypoll.h>
 
+
+
 #define BACKLOG 100  	 		/* Number of allowed connections */
 #define BUFF_SIZE 2048
+
+#define DATA_PATH "./"
 
 Session sessions[SESSIONS];
 
