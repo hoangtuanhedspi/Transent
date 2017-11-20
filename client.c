@@ -5,9 +5,8 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <string.h>
-
-#include "directory.h"
-#include "poll.h"
+#include <transent/directory.h>
+#include <poll.h>
 
 #define BUFF_SIZE 2048
 #define POLLS 2
@@ -34,7 +33,8 @@ int main(int argc, char *argv[]) {
 
 	/* Init poll stdin, stdout, client_sock */
 	struct pollfd polls[POLLS];
-	polls[0].fd = 0; polls[0].events = POLLIN;				// STDIN
+	polls[0].fd = 0; 
+	polls[0].events = POLLIN;				// STDIN
 	polls[1].fd = client_sock;
 	polls[0].events = POLLIN;	// client_sock
 
@@ -53,7 +53,6 @@ int main(int argc, char *argv[]) {
 	printf("Enter a command:\n");
 	int revents;
 	while(1){
-
 		revents = poll(polls, POLLS, 100000);
 		if (revents > 0) {
 			if (polls[0].revents & POLLIN) {

@@ -1,4 +1,4 @@
-#include "session.h"
+#include "../include/session.h"
 
 Session *findSessionByConnfd (int connfd) {
     int i;

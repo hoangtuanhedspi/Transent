@@ -6,8 +6,8 @@
 #include <strings.h>
 #include <ctype.h>
 
-#include "session.h"
-#include "mypoll.h"
+#include <transent/session.h>
+#include <transent/mypoll.h>
 
 #define BACKLOG 100  	 		/* Number of allowed connections */
 #define BUFF_SIZE 2048
