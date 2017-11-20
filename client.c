@@ -10,7 +10,7 @@
 #include "poll.h"
 
 #define BUFF_SIZE 2048
-#define POLLS 2				/* STDIN, client_sock */
+#define POLLS 2
 
 /* Check arguments is valid or not. If valid ip -> *serv_ip, port -> &serv_port */
 void validArguments (int argc, char *argv[], char *serv_ip, int *serv_port);
@@ -35,7 +35,8 @@ int main(int argc, char *argv[]) {
 	/* Init poll stdin, stdout, client_sock */
 	struct pollfd polls[POLLS];
 	polls[0].fd = 0; polls[0].events = POLLIN;				// STDIN
-	polls[1].fd = client_sock; polls[0].events = POLLIN;	// client_sock
+	polls[1].fd = client_sock;
+	polls[0].events = POLLIN;	// client_sock
 
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(server_port);
@@ -50,7 +51,6 @@ int main(int argc, char *argv[]) {
 	// __fpurge(stdout);
 	system("clear");
 	printf("Enter a command:\n");
-
 	int revents;
 	while(1){
 

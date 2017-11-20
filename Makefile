@@ -26,15 +26,15 @@ $(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT)
 	$(CC) $(CFLAGS) -c -o $@ $< $(INC)
 
 test:
-	$(CC) $(CFLAGS) tests/test.c $(INC) $(LIBS) -o test
+	$(CC) $(CFLAGS) tests/test.c $(INC) $(LIB) -o test
 
 lib: $(LIBS)
 
 client: client.c
-	$(CC) $(CFLAGS) $^ -o $@ $(LIBS) $(INC)
+	$(CC) $(CFLAGS) $^ -o $@ $(LIB) $(INC)
 
 server: server.c
-	$(CC) $(CFLAGS) $^ -o $@ $(LIBS) $(INC)
+	$(CC) $(CFLAGS) $^ -o $@ $(LIB) $(INC)
 
 clean:
 	$(RM) -r $(BUILDDIR) $(BINDIR) test *.o client server
