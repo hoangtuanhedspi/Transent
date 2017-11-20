@@ -1,6 +1,6 @@
-#include "directory.h"
+#include "../include/directory.h"
 
-_Bool existFile (const char *path, const char *file) {
+_Bool existFile(const char *path, const char *file) {
     DIR *d;
     struct dirent *dir;
 
