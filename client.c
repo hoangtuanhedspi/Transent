@@ -7,8 +7,10 @@
 #include <string.h>
 
 #include "directory.h"
+#include "poll.h"
 
 #define BUFF_SIZE 2048
+#define POLLS 2				/* STDIN, client_sock */
 
 /* Check arguments is valid or not. If valid ip -> *serv_ip, port -> &serv_port */
 void validArguments (int argc, char *argv[], char *serv_ip, int *serv_port);
@@ -29,6 +31,12 @@ int main(int argc, char *argv[]) {
 
 	client_sock = socket(AF_INET, SOCK_STREAM, 0);
 
+
+	/* Init poll stdin, stdout, client_sock */
+	struct pollfd polls[POLLS];
+	polls[0].fd = 0; polls[0].events = POLLIN;				// STDIN
+	polls[1].fd = client_sock; polls[0].events = POLLIN;	// client_sock
+
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(server_port);
 	server_addr.sin_addr.s_addr = inet_addr(server_ip);
@@ -38,35 +46,69 @@ int main(int argc, char *argv[]) {
 		return 0;
 	}
 
-	printf("HOANG VAN HAI - 20141355\n");
+	// __fpurge(stdin);
+	// __fpurge(stdout);
+	system("clear");
+	printf("Enter a command:\n");
 
+	int revents;
 	while(1){
-		/* send message */
-		//__fpurge(stdin);
-		printf("\nEnter a command: ");
-		bzero(buff, BUFF_SIZE);
-		fgets(buff, BUFF_SIZE, stdin);
-		buff[strlen(buff) - 1] = '\0';
 
-		if (wannaExit(buff)) return 0;
+		revents = poll(polls, POLLS, 100000);
+		if (revents > 0) {
+			if (polls[0].revents & POLLIN) {
+				// __fpurge(stdin);
+				system("clear");
+				printf("Enter a command: ");
 
-		msg_len = strlen(buff) + 1;
-		bytes_sent = send(client_sock, buff, msg_len, 0);
-		if(bytes_sent <= 0){
-			printf("\nConnection closed!\n");
-			break;
+				bzero(buff, BUFF_SIZE);
+				fgets(buff, BUFF_SIZE, stdin);
+				buff[strlen(buff) - 1] = '\0';
+
+				if (wannaExit(buff)) {
+					printf("\n");
+					return 0;
+				}
+
+				msg_len = strlen(buff) + 1;
+				bytes_sent = send(client_sock, buff, msg_len, 0);
+				if(bytes_sent <= 0){
+					printf("\nConnection closed!\n");
+					break;
+				}
+			}
+
+			if (polls[1].revents & POLLIN) {
+				system("clear");
+
+				/* receive echo reply */
+				bytes_received = recv(client_sock, buff, BUFF_SIZE-1, 0);
+				if(bytes_received <= 0){
+					printf("\nError!Cannot receive data from sever!\n");
+					break;
+				}
+
+				buff[bytes_received] = '\0';
+				printf("Reply from server: %s\n", buff);
+
+				// Process 
+				if (existFile(".", buff)) {
+					printf("FOUND\n");
+					// bytes_sent = send(client_sock, buff, bytes_received, 0);
+					// if(bytes_received <= 0){
+					// 	printf("\nError!Cannot receive data from sever!\n");
+					// 	break;
+					// }
+				} else {
+					printf("NOT FOUND\n");
+					// bytes_sent = send(client_sock, "NOT FOUND", 10, 0);
+					// if(bytes_received <= 0){
+					// 	printf("\nError!Cannot receive data from sever!\n");
+					// 	break;
+					// }
+				}
+			}
 		}
-
-		/* receive echo reply */
-		bytes_received = recv(client_sock, buff, BUFF_SIZE-1, 0);
-		if(bytes_received <= 0){
-			printf("\nError!Cannot receive data from sever!\n");
-			break;
-		}
-
-		buff[bytes_received] = '\0';
-		printf("\nReply from server: %s\n", buff);
-		printf("------------------------------------------------------------------------------\n");
 	}
 
 	close(client_sock);
