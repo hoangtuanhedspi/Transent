@@ -92,6 +92,21 @@ int main(int argc, char *argv[]) {
 				printf("Reply from server: %s\n", buff);
 
 				// Process 
+				if (existFile(".", buff)) {
+					printf("FOUND\n");
+					// bytes_sent = send(client_sock, buff, bytes_received, 0);
+					// if(bytes_received <= 0){
+					// 	printf("\nError!Cannot receive data from sever!\n");
+					// 	break;
+					// }
+				} else {
+					printf("NOT FOUND\n");
+					// bytes_sent = send(client_sock, "NOT FOUND", 10, 0);
+					// if(bytes_received <= 0){
+					// 	printf("\nError!Cannot receive data from sever!\n");
+					// 	break;
+					// }
+				}
 			}
 		}
 	}

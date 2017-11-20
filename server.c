@@ -133,13 +133,18 @@ void process(struct pollfd *po) {
 		// Using pthread???
 		for (int i = 0; i < SESSIONS; i++) {
 			if (sessions[i].connfd != -1 && !isSameSession(sessions + i, ss)) {
-				printf("%d\n", sessions[i].connfd);
 				bytes_sent = send(sessions[i].connfd, recv_data, bytes_received, 0);
 				if (bytes_sent < 0)
 					perror("\nError: ");
 			}
 		}
 		
+		/* Recv from all other client */
+		// for (int i = 0; i < SESSIONS; i++) {
+		// 	if (sessions[i].connfd != -1 && !isSameSession(sessions + i, ss)) {
+
+		// 	}
+		// }
 	}
 }
 
