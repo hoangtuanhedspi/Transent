@@ -20,7 +20,8 @@ $(TARGET): transent.c
 
 $(LIBS): $(OBJECTS)
 	if [ ! -d "$(SHAREDDIR)" ];then mkdir -p $(SHAREDDIR); fi;
-	if [ ! -d "$(SHAREDINC)" ];then mkdir -p $(SHAREDINC) && cp -R include/ $(SHAREDINC); fi;
+	if [ ! -d "$(SHAREDINC)" ];then mkdir -p $(SHAREDINC); fi;
+	cp -R include/ $(SHAREDINC)
 	ar rcs $@ $(OBJECTS)
 
 $(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT)

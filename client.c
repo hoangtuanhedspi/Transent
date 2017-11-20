@@ -8,6 +8,9 @@
 #include <transent/directory.h>
 #include <poll.h>
 
+#define DEBUG 1
+#include <transent/util.h>
+
 #define BUFF_SIZE 2048
 #define POLLS 2
 
@@ -20,7 +23,7 @@ _Bool wannaExit (char *buff);
 int main(int argc, char *argv[]) {
 	int server_port = 0;
 	char server_ip[16] = "";		// 16 = (max length of ipv4 string) + 1
-	
+	logwarn("Start program");
 	validArguments(argc, argv, server_ip, &server_port);
 
 	int client_sock;

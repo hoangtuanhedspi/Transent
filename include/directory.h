@@ -7,6 +7,4 @@
 
 _Bool existFile (const char *path, const char *file);
 void printListFile (const char *path);
-
-
 #endif
