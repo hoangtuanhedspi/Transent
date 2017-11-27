@@ -7,7 +7,7 @@ _Bool removePoll (struct pollfd *poll) {
     return 1;
 }
 
-_Bool addPoll (int connfd, short events) {
+_Bool addPoll(int connfd, short events) {
     int i = 0;
     for (int i = 0; i < POLLS; i++) {
         if (polls[i].fd == -1) {
