@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <transent/directory.h>
+#include <transent/util.h>
+#include <poll.h>
 
 int main(int argc, char* argv[]){
-    
-    printListFile("/Users/anonymousjp/Desktop/");
+    printf("%d\n",get_user_method(1));
     return 0;
 }
