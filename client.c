@@ -10,8 +10,7 @@
 
 #define DEBUG 1
 #include <transent/util.h>
-
-#define BUFF_SIZE 2048
+#include <transent/interface.h>
 #define POLLS 2
 
 /* Check arguments is valid or not. If valid ip -> *serv_ip, port -> &serv_port */
@@ -22,6 +21,7 @@ _Bool wannaExit (char *buff);
 
 int main(int argc, char *argv[]) {
 	int server_port = 0;
+	int method = UNDEFINE;
 	char server_ip[16] = "";		// 16 = (max length of ipv4 string) + 1
 	logwarn("Start program");
 	validArguments(argc, argv, server_ip, &server_port);
@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
 	polls[0].fd = 0; 
 	polls[0].events = POLLIN;				// STDIN
 	polls[1].fd = client_sock;
-	polls[0].events = POLLIN;	// client_sock
+	polls[1].events = POLLIN;	// client_sock
 
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(server_port);
@@ -50,21 +50,19 @@ int main(int argc, char *argv[]) {
 		return 0;
 	}
 
-	// __fpurge(stdin);
-	// __fpurge(stdout);
-	system("clear");
-	printf("Enter a command:\n");
+	method = get_user_method(0);
 	int revents;
 	while(1){
 		revents = poll(polls, POLLS, 100000);
+		loginfo("revents:[%d]\n",revents);
 		if (revents > 0) {
 			if (polls[0].revents & POLLIN) {
-				// __fpurge(stdin);
-				system("clear");
-				printf("Enter a command: ");
+				if(method==SENDFILE)
+					fprintf(stderr,"Enter file name:");
 
 				bzero(buff, BUFF_SIZE);
 				fgets(buff, BUFF_SIZE, stdin);
+
 				buff[strlen(buff) - 1] = '\0';
 
 				if (wannaExit(buff)) {
@@ -73,16 +71,17 @@ int main(int argc, char *argv[]) {
 				}
 
 				msg_len = strlen(buff) + 1;
+
 				bytes_sent = send(client_sock, buff, msg_len, 0);
+
 				if(bytes_sent <= 0){
 					printf("\nConnection closed!\n");
 					break;
 				}
 			}
-
+			loginfo("Echo reply poll [%d][%d]",polls[1].revents,POLLOUT);
 			if (polls[1].revents & POLLIN) {
-				system("clear");
-
+				loginfo("Echo reply poll [%d]",polls[1].revents);
 				/* receive echo reply */
 				bytes_received = recv(client_sock, buff, BUFF_SIZE-1, 0);
 				if(bytes_received <= 0){
@@ -110,6 +109,8 @@ int main(int argc, char *argv[]) {
 					// }
 				}
 			}
+		}else if(revents == 0){
+			printf("Timeout!");
 		}
 	}
 
@@ -127,7 +128,7 @@ void validArguments (int argc, char *argv[], char *serv_ip, int *serv_port) {
 		/* Check valid ip address */
 		struct sockaddr_in tmp_addr;
 		if (inet_pton(AF_INET, argv[1], &(tmp_addr.sin_addr)) == 0) {
-			printf("IP Address is invalid\n!");
+			printf(ADDERR);
 			exit(EXIT_FAILURE);
 		} else {
 			strcpy(serv_ip, argv[1]);
@@ -138,13 +139,13 @@ void validArguments (int argc, char *argv[], char *serv_ip, int *serv_port) {
 		char *port_str = argv[2];
 		for (i = 0; port_str[i] != '\0'; i++) {
 			if (!isdigit(port_str[i])) {
-				printf("Port is invalid\n!");
+				printf(PARGERR);
 				exit(EXIT_FAILURE);
 			}
 		}
 		if (port_str[i] == '\0') *serv_port = atoi(port_str);
 	} else {
-		printf("(ERROR) To few arguments!\n");
+		printf(ARGERR);
 		exit(EXIT_FAILURE);
 	}
 }
