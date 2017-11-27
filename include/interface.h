@@ -20,10 +20,34 @@
  */
 #ifndef _TRANSENT_INTERFACE_
 #define _TRANSENT_INTERFACE_
-
 /**
  * @file
  * Communication interface for client-server
  */
+
+//! Data stream buffer information
+
+//Size of data stream buffer
+#define BUFF_SIZE   2048
+
+#define HEADER_LEN  2
+
+//! Request method info stored on HEADER of data stream 
+//Request file method
+#define RQ_FILE     0x0001
+//Request file failed
+#define RQ_FAIL     0x0001 << 1
+//Response file was found
+#define RP_FOUND    0x0001 << 2
+//Response file not found
+#define RP_NFOUND   0x0001 << 3
+//Undefine method
+#define UNDEFINE    -1
+
+int add_request(char* buff,int method);
+
+char* attach_payload(char* buff,char* payload);
+
+int valid_method(int method);
 
 #endif

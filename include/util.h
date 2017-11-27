@@ -21,7 +21,7 @@
 
 #ifndef _TRANSENT_UTIL_
 #define _TRANSENT_UTIL_
-
+#include "interface.h"
 /**
  * @file
  * Utilities function for Transent
@@ -43,6 +43,17 @@
 #define check_mem(A)
 #endif
 
+#define ARGERR "Error: Too few arguments!\n"
+#define PARGERR "Error: Invalid port argument!\n"
+#define ADDERR "Error: Invalid address argument!\n"
 
+typedef enum _action{
+    UNKNOWN,
+    SENDFILE,
+    LOGIN,
+    LOGOUT
+}MenuAction;
 
+MenuAction get_user_method(int logedin);
+MenuAction valid_action(MenuAction action);
 #endif
