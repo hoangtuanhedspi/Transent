@@ -10,11 +10,11 @@
 #include<transent/util.h>
 #include <transent/session.h>
 #include <transent/mypoll.h>
+#include <transent/interface.h>
 
 
 
 #define BACKLOG 100  	 		/* Number of allowed connections */
-#define BUFF_SIZE 2048
 
 #define DATA_PATH "./"
 
@@ -94,7 +94,10 @@ int main(int argc, char *argv[]) {
 				if (newSession(client, *connfd) == 0) {
 					printf("Error: Number of sessions is maximum!");
 					continue;
+				}else{
+					loginfo("New session added!");
 				}
+
 				printf("You got a connection from %s\n", inet_ntoa(client->sin_addr)); /* prints client's IP */
 			}
 
@@ -138,10 +141,12 @@ void process(struct pollfd *po) {
 		
 		// Using pthread???
 		for (int i = 0; i < SESSIONS; i++) {
+			loginfo("fd:%d",sessions[i].connfd);
 			if (sessions[i].connfd != -1 && !isSameSession(sessions + i, ss)) {
 				bytes_sent = send(sessions[i].connfd, recv_data, bytes_received, 0);
 				if (bytes_sent < 0)
 					perror("\nError: ");
+				loginfo("Responed");
 			}
 		}
 		
