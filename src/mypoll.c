@@ -2,7 +2,6 @@
 
 _Bool removePoll (struct pollfd *poll) {
     if (poll == NULL) return 0;
-
     poll->fd = -1;
     return 1;
 }
