@@ -22,3 +22,11 @@ MenuAction valid_action(MenuAction action){
     }
     return UNKNOWN;
 }
+
+int parse_packet(char* buff,char* payload,int* size){
+    int req_method = UNDEFINE;
+    req_method = extract_request(buff);
+	bzero(payload,PAY_LEN);
+    *size = detach_payload2(buff,payload);
+    return req_method;
+}
