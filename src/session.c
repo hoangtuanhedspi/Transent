@@ -38,7 +38,6 @@ _Bool removeSession (Session *ss) {
 }
 
 _Bool isSameSession (Session *ss1, Session *ss2) {
-    loginfo("Compare");
     if (ss1 == NULL || ss2 == NULL) {
         return 0;
     } else if (isEqualSockAddrIn(ss1->cliaddr, ss2->cliaddr) && ss1->connfd == ss2->connfd)
