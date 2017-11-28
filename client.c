@@ -14,6 +14,7 @@
 #include <transent/util.h>
 #include <transent/interface.h>
 #define POLLS 2
+#define DATA_PATH "./db"
 
 /* Check arguments is valid or not. If valid ip -> *serv_ip, port -> &serv_port */
 void validArguments (int argc, char *argv[], char *serv_ip, int *serv_port);
@@ -56,7 +57,8 @@ int main(int argc, char *argv[]) {
 	}
 
 	method = get_user_method(0);
-	
+	if(method==UNKNOWN) 
+		goto end_process;
 	if(method==LOGOUT) 
 		goto end_process;
 
@@ -66,54 +68,44 @@ int main(int argc, char *argv[]) {
 			if (polls[0].revents & (POLLOUT|POLLRDNORM)) {
 				if(method==SENDFILE)
 					printf("Enter file name:");
-				
+
+				bzero(payload,PAY_LEN);
 				add_request(buff,RQ_FILE);
-				fgets(payload, PAY_LEN, stdin);
+				scanf("%[^\n]",payload);
+				while(getchar()!='\n');
 				attach_payload(buff,payload,strlen(payload));
-				loginfo("Payload:%s\n",detach_payload(buff));
-				
+				loginfo("Payload:%s|len:%d|req:%d\n",detach_payload(buff),get_payload_size(buff),extract_request(buff));
 				if (wannaExit(payload)){
 					printf("\n");
 					return 0;
 				}
-
 				msg_len = get_real_len(buff);
-				loginfo("Real len:%d\n",msg_len);
-
 				bytes_sent = send(client_sock, buff, msg_len, 0);
-
 				if(bytes_sent <= 0){
 					printf("\nConnection closed!\n");
 					break;
 				}
+				loginfo("Send:%dbyte\n",get_real_len(buff));
 			}
 			 
 			if (polls[1].revents & POLLIN) {
 				/* receive echo reply */
+				int req_response = UNDEFINE;
 				bytes_received = recv(client_sock, buff, BUFF_SIZE-1, 0);
-
 				if(bytes_received <= 0){
 					printf("\nError!Cannot receive data from sever!\n");
 					break;
 				}
 
-				buff[bytes_received] = '\0';
-				printf("Reply from server: %s\n", buff);
+				req_response = parse_packet(buff,payload,&bytes_received);
 
-				if (existFile(".", buff)) {
-					printf("FOUND\n");
-					// bytes_sent = send(client_sock, buff, bytes_received, 0);
-					// if(bytes_received <= 0){
-					// 	printf("\nError!Cannot receive data from sever!\n");
-					// 	break;
-					// }
-				} else {
-					printf("NOT FOUND\n");
-					// bytes_sent = send(client_sock, "NOT FOUND", 10, 0);
-					// if(bytes_received <= 0){
-					// 	printf("\nError!Cannot receive data from sever!\n");
-					// 	break;
-					// }
+				if(req_response == RQ_FILE){
+					char* filename = detach_payload(buff);
+					loginfo("filename:%s\n",filename);
+
+					if(existFile(DATA_PATH,filename)){
+						printf("File exist!\n");
+					}
 				}
 			}
 		}else if(revents == 0){
