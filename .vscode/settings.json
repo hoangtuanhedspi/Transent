@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "util.h": "c",
+        "interface.h": "c"
+    },
+    "files.autoSave": "onFocusChange"
+}

@@ -1,14 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <string.h>
+#include <transent/directory.h>
+#include <poll.h>
+#include <unistd.h>
 
-#include "directory.h"
-
-#define BUFF_SIZE 2048
+#define DEBUG 1
+#include <transent/util.h>
+#include <transent/interface.h>
+#define POLLS 2
+#define DATA_PATH "./db"
 
 /* Check arguments is valid or not. If valid ip -> *serv_ip, port -> &serv_port */
 void validArguments (int argc, char *argv[], char *serv_ip, int *serv_port);
@@ -17,17 +23,29 @@ void validArguments (int argc, char *argv[], char *serv_ip, int *serv_port);
 _Bool wannaExit (char *buff);
 
 int main(int argc, char *argv[]) {
-	int server_port = 0;
-	char server_ip[16] = "";		// 16 = (max length of ipv4 string) + 1
-	
+	int 	server_port = 0;
+	int 	method = UNDEFINE;
+	int 	revents = -1;
+	int 	client_sock;
+	int 	msg_len, 
+			bytes_sent, 
+			bytes_received;
+	char 	server_ip[16] = "";
+	char 	buff[BUFF_SIZE],
+			payload[PAY_LEN];
+	struct 	pollfd polls[POLLS];
+	struct 	sockaddr_in server_addr;
+
+	logwarn("Start program");
 	validArguments(argc, argv, server_ip, &server_port);
 
-	int client_sock;
-	char buff[BUFF_SIZE];
-	struct sockaddr_in server_addr; /* server's address information */
-	int msg_len, bytes_sent, bytes_received;
-
 	client_sock = socket(AF_INET, SOCK_STREAM, 0);
+
+	/* Init poll stdin, stdout, client_sock */
+	polls[0].fd = 0; 
+	polls[0].events = POLLOUT|POLLRDNORM;
+	polls[1].fd = client_sock;
+	polls[1].events = POLLIN;
 
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(server_port);
@@ -38,42 +56,68 @@ int main(int argc, char *argv[]) {
 		return 0;
 	}
 
-	printf("HOANG VAN HAI - 20141355\n");
+	method = get_user_method(0);
+	if(method==UNKNOWN) 
+		goto end_process;
+	if(method==LOGOUT) 
+		goto end_process;
 
 	while(1){
-		/* send message */
-		//__fpurge(stdin);
-		printf("\nEnter a command: ");
-		bzero(buff, BUFF_SIZE);
-		fgets(buff, BUFF_SIZE, stdin);
-		buff[strlen(buff) - 1] = '\0';
+		revents = poll(polls, POLLS, 20000);
+		if (revents > 0) {
+			if (polls[0].revents & (POLLOUT|POLLRDNORM)) {
+				if(method==SENDFILE)
+					printf("Enter file name:");
 
-		if (wannaExit(buff)) return 0;
+				bzero(payload,PAY_LEN);
+				add_request(buff,RQ_FILE);
+				scanf("%[^\n]",payload);
+				while(getchar()!='\n');
+				attach_payload(buff,payload,strlen(payload));
+				loginfo("Payload:%s|len:%d|req:%d\n",detach_payload(buff),get_payload_size(buff),extract_request(buff));
+				if (wannaExit(payload)){
+					printf("\n");
+					return 0;
+				}
+				msg_len = get_real_len(buff);
+				bytes_sent = send(client_sock, buff, msg_len, 0);
+				if(bytes_sent <= 0){
+					printf("\nConnection closed!\n");
+					break;
+				}
+				loginfo("Send:%dbyte\n",get_real_len(buff));
+			}
+			 
+			if (polls[1].revents & POLLIN) {
+				/* receive echo reply */
+				int req_response = UNDEFINE;
+				bytes_received = recv(client_sock, buff, BUFF_SIZE-1, 0);
+				if(bytes_received <= 0){
+					printf("\nError!Cannot receive data from sever!\n");
+					break;
+				}
 
-		msg_len = strlen(buff) + 1;
-		bytes_sent = send(client_sock, buff, msg_len, 0);
-		if(bytes_sent <= 0){
-			printf("\nConnection closed!\n");
-			break;
+				req_response = parse_packet(buff,payload,&bytes_received);
+
+				if(req_response == RQ_FILE){
+					char* filename = detach_payload(buff);
+					loginfo("filename:%s\n",filename);
+
+					if(existFile(DATA_PATH,filename)){
+						printf("File exist!\n");
+					}
+				}
+			}
+		}else if(revents == 0){
+			printf("Timeout!");
 		}
-
-		/* receive echo reply */
-		bytes_received = recv(client_sock, buff, BUFF_SIZE-1, 0);
-		if(bytes_received <= 0){
-			printf("\nError!Cannot receive data from sever!\n");
-			break;
-		}
-
-		buff[bytes_received] = '\0';
-		printf("\nReply from server: %s\n", buff);
-		printf("------------------------------------------------------------------------------\n");
 	}
-
+	end_process:
 	close(client_sock);
 	return 0;
 }
 
-_Bool wannaExit (char *buff) {
+_Bool wannaExit(char *buff) {
 	if (buff[0] == '\0' || buff[0] == '\n') return 1;
 	else return 0;
 }
@@ -83,7 +127,7 @@ void validArguments (int argc, char *argv[], char *serv_ip, int *serv_port) {
 		/* Check valid ip address */
 		struct sockaddr_in tmp_addr;
 		if (inet_pton(AF_INET, argv[1], &(tmp_addr.sin_addr)) == 0) {
-			printf("IP Address is invalid\n!");
+			printf(ADDERR);
 			exit(EXIT_FAILURE);
 		} else {
 			strcpy(serv_ip, argv[1]);
@@ -94,13 +138,13 @@ void validArguments (int argc, char *argv[], char *serv_ip, int *serv_port) {
 		char *port_str = argv[2];
 		for (i = 0; port_str[i] != '\0'; i++) {
 			if (!isdigit(port_str[i])) {
-				printf("Port is invalid\n!");
+				printf(PARGERR);
 				exit(EXIT_FAILURE);
 			}
 		}
 		if (port_str[i] == '\0') *serv_port = atoi(port_str);
 	} else {
-		printf("(ERROR) To few arguments!\n");
+		printf(ARGERR);
 		exit(EXIT_FAILURE);
 	}
 }
