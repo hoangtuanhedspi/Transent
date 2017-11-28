@@ -13,14 +13,10 @@ _Bool addPoll(int connfd, short events) {
         if (polls[i].fd == -1) {
             polls[i].fd = connfd;
             polls[i].events = events;
-
             return 1;
         }
     }
-
-    if (i == POLLS) {
-        return 0;
-    }
+    return 0;
 }
 
 void initPolls () {

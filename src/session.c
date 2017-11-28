@@ -21,10 +21,7 @@ _Bool newSession (struct sockaddr_in *cliaddr, int connfd) {
             return 1;
         }
     }
-
-    if (i == SESSIONS) {
-        return 0;
-    } 
+    return 0;
 }
 
 _Bool removeSession (Session *ss) {

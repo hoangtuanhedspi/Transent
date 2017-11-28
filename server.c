@@ -12,10 +12,7 @@
 #include <transent/mypoll.h>
 #include <transent/interface.h>
 
-
-
 #define BACKLOG 100  	 		/* Number of allowed connections */
-
 #define DATA_PATH "./"
 
 Session sessions[SESSIONS];
@@ -37,7 +34,7 @@ int main(int argc, char *argv[]) {
 	int listenfd, *connfd;
 	struct sockaddr_in server; 		/* server's address information */
 	struct sockaddr_in *client; 	/* client's address information */
-	int sin_size;
+	socklen_t sin_size;
 
 	if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) == -1 ){  /* calls socket() */
 		perror("\nError: ");
@@ -159,7 +156,7 @@ void process(struct pollfd *po) {
 	}
 }
 
-void closeConnection (struct pollfd *po, Session *ss) {
+void closeConnection(struct pollfd *po, Session *ss) {
 	/* Close connection */
 	close(po->fd);
 

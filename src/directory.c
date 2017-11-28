@@ -1,3 +1,4 @@
+#include <string.h>
 #include "../include/directory.h"
 
 _Bool existFile(const char *path, const char *file){
