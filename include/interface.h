@@ -47,16 +47,24 @@
 //Undefine method
 #define UNDEFINE    -1
 
+/**
+ * Identify the packet position in buffer stream.
+ * If you add a packet position to this list, add it so that
+ * 1. \ref BUFF_SIZE also add more 4byte at define
+ * 2. Give \ref HEADER_LEN more 4byte for one packet added
+ */
 typedef enum _pack_position{
-    METHOD = 1,
-    PAYSIZE,
-    PAYLOAD
+    PACK_EMPTY,
+    PACK_METHOD,
+    PACK_PAYSIZE,
+    PACK_PAYLOAD
 }PackPosition;
 
 void* add_request(char* buff,int method);
 int extract_request(char* buff);
 void* attach_payload(char* buff,char* payload,unsigned int size);
 char* detach_payload(char* buff);
+int detach_payload2(char* buff,char* payload);
 int get_payload_size(char* buff);
 int valid_method(int method);
 int get_real_len(char* buff);
