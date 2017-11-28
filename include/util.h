@@ -46,6 +46,7 @@
 #define ARGERR "Error: Too few arguments!\n"
 #define PARGERR "Error: Invalid port argument!\n"
 #define ADDERR "Error: Invalid address argument!\n"
+#define tsalloc(type,size) (type*)malloc(size*sizeof(type))
 
 typedef enum _action{
     UNKNOWN,
@@ -56,4 +57,6 @@ typedef enum _action{
 
 MenuAction get_user_method(int logedin);
 MenuAction valid_action(MenuAction action);
+
+
 #endif
