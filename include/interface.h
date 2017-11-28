@@ -25,29 +25,40 @@
  * Communication interface for client-server
  */
 
+
 //! Data stream buffer information
-
 //Size of data stream buffer
-#define BUFF_SIZE   2048
-
-#define HEADER_LEN  2
+#define BUFF_SIZE   2056
+#define HEADER_LEN  8
+#define PACK_SIZE   4
+#define PAY_LEN     BUFF_SIZE - HEADER_LEN
 
 //! Request method info stored on HEADER of data stream 
 //Request file method
 #define RQ_FILE     0x0001
 //Request file failed
 #define RQ_FAIL     0x0001 << 1
+//
+#define WAIT_RQ     0x0001 << 2
 //Response file was found
-#define RP_FOUND    0x0001 << 2
+#define RP_FOUND    0x0001 << 3
 //Response file not found
-#define RP_NFOUND   0x0001 << 3
+#define RP_NFOUND   0x0001 << 4
 //Undefine method
 #define UNDEFINE    -1
 
-int add_request(char* buff,int method);
+typedef enum _pack_position{
+    METHOD = 1,
+    PAYSIZE,
+    PAYLOAD
+}PackPosition;
 
-char* attach_payload(char* buff,char* payload);
-
+void* add_request(char* buff,int method);
+int extract_request(char* buff);
+void* attach_payload(char* buff,char* payload,unsigned int size);
+char* detach_payload(char* buff);
+int get_payload_size(char* buff);
 int valid_method(int method);
+int get_real_len(char* buff);
 
 #endif
