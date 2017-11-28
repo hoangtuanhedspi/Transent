@@ -13,7 +13,7 @@
 #include <transent/interface.h>
 
 #define BACKLOG 100  	 		/* Number of allowed connections */
-#define DATA_PATH "./"
+#define DATA_PATH "./db"
 
 Session sessions[SESSIONS];
 
@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
 	initSessions();
 	
 	int revents;
-	
+	loginfo("start poll");
 	while(1){
 		revents = poll(polls, POLLS, 100000);		/* Timeout = 10s */
 		if (revents > 0) {
@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
 				
 				if ((*connfd = accept(listenfd, (struct sockaddr *)client, &sin_size)) ==- 1)
 					perror("\nError: ");
-
+				loginfo("Accept socket[%d]",client->sin_port);
 				/* Insert to polls */
 				if (addPoll(*connfd, POLLIN) == 0) {
 					/* polls is full -> close connection */
@@ -101,7 +101,6 @@ int main(int argc, char *argv[]) {
 			/* Process transfer */
 			for (int i = 1; i < POLLS; i++) {
 				if (polls[i].fd == -1) continue;
-
 				if (polls[i].revents & POLLIN) {
 					process(polls + i);
 				}
@@ -114,14 +113,16 @@ int main(int argc, char *argv[]) {
 }
 
 void process(struct pollfd *po) {
+	loginfo("start %s",__func__);
 	int connfd = po->fd;
 	Session *ss = findSessionByConnfd(connfd);
 	struct sockaddr_in *client = ss->cliaddr;
-	int bytes_sent, bytes_received, bytes_output;
-	char recv_data[BUFF_SIZE];
-	char sent_data[BUFF_SIZE];
-
-	bytes_received = recv(connfd, recv_data, BUFF_SIZE - 1, 0); // blocking
+	int bytes_sent, bytes_received, bytes_output,payload_size;
+	char buff[BUFF_SIZE];
+	char payload[PAY_LEN];
+	bzero(buff,BUFF_SIZE);
+	bytes_received = recv(connfd, buff, BUFF_SIZE - 1, 0); // blocking
+	int req_method = UNDEFINE;
 	if (bytes_received < 0) {
 		perror("\nError: ");
 		closeConnection(po, ss);
@@ -129,23 +130,28 @@ void process(struct pollfd *po) {
 		printf("Connection closed.\n");
 		closeConnection(po, ss);
 	} else {
-		recv_data[bytes_received] = '\0';
-		printf("\nReceive: |%s|\n", recv_data);
-
+		req_method = parse_packet(buff,payload,&payload_size);
+		loginfo("Info:%d\n",req_method);
+		if(req_method==RQ_FILE){
+			loginfo("\nFind file: %s || bufflen: %d byte\n",detach_payload(buff),get_real_len(buff));
+			add_request(buff,RQ_FILE);
+			attach_payload(buff,payload,payload_size);
+			for (int i = 0; i < SESSIONS; i++) {
+				if (sessions[i].connfd != -1 && !isSameSession(sessions + i, ss)) {
+					bytes_sent = get_real_len(buff);
+					bytes_sent = send(sessions[i].connfd,buff, bytes_sent, 0);
+					if (bytes_sent < 0)
+						perror("\nError: ");
+					loginfo("Response:%dbyte\n",bytes_sent);
+				}
+			}
+		}
 		/* Print list of client has file */
 
 		/* Send for all other client */
 		
 		// Using pthread???
-		for (int i = 0; i < SESSIONS; i++) {
-			loginfo("fd:%d",sessions[i].connfd);
-			if (sessions[i].connfd != -1 && !isSameSession(sessions + i, ss)) {
-				bytes_sent = send(sessions[i].connfd, recv_data, bytes_received, 0);
-				if (bytes_sent < 0)
-					perror("\nError: ");
-				loginfo("Responed");
-			}
-		}
+		
 		
 		/* Recv from all other client */
 		// for (int i = 0; i < SESSIONS; i++) {
