@@ -28,24 +28,24 @@ int pack(int at);
 
 void* add_request(char* buff,int method){
     bzero(buff,BUFF_SIZE);
-    return memcpy(buff+pack(METHOD),&method,PACK_SIZE);
+    return memcpy(buff+pack(PACK_METHOD),&method,PACK_SIZE);
 }
 
 int pack(int at){
     at-=1;
-    if(at<=1) at = 0;
+    if(at<1) at = 0;
     return PACK_SIZE*at;
 }
 
 int extract_request(char* buff){
     int req = UNDEFINE;
-    memcpy(&req,buff+pack(METHOD),PACK_SIZE);
+    memcpy(&req,buff+pack(PACK_METHOD),PACK_SIZE);
     return req;
 }
 
 void* attach_payload(char* buff,char* payload,unsigned int size){
     bzero(buff+HEADER_LEN,PAY_LEN);
-    memcpy(buff+pack(PAYSIZE),&size,PACK_SIZE);
+    memcpy(buff+pack(PACK_PAYSIZE),&size,PACK_SIZE);
     return memcpy(buff+HEADER_LEN,payload,size);
 }
 
@@ -57,6 +57,12 @@ char* detach_payload(char* buff){
     return payload;
 }
 
+int detach_payload2(char* buff,char* payload){
+    bzero(payload,PAY_LEN);
+    memcpy(payload,buff+HEADER_LEN,PAY_LEN);
+    return get_payload_size(buff);
+}
+
 int get_real_len(char* buff){
     int len = 0;
     len += HEADER_LEN + get_payload_size(buff);
@@ -65,7 +71,7 @@ int get_real_len(char* buff){
 
 int get_payload_size(char* buff){
     int size = 0;
-    memcpy(&size,buff+pack(PAYSIZE),PACK_SIZE);
+    memcpy(&size,buff+pack(PACK_PAYSIZE),PACK_SIZE);
     return size;
 }
 
