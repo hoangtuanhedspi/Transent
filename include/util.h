@@ -57,6 +57,6 @@ typedef enum _action{
 
 MenuAction get_user_method(int logedin);
 MenuAction valid_action(MenuAction action);
-
+int parse_packet(char* buff,char* payload,int* size);
 
 #endif
