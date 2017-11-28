@@ -9,7 +9,7 @@ LIBS := ./bin/lib/libtransent.a
 SRCEXT := c
 SOURCES := $(shell find $(SRCDIR) -type f -name '*.$(SRCEXT)')
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
-CFLAGS := -w
+CFLAGS :=  
 LIB := -L./bin/lib -ltransent
 INC := -I./bin/include
 

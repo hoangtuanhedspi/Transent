@@ -22,7 +22,8 @@ _Bool wannaExit (char *buff);
 int main(int argc, char *argv[]) {
 	int server_port = 0;
 	int method = UNDEFINE;
-	char server_ip[16] = "";		// 16 = (max length of ipv4 string) + 1
+	int revents = -1;
+	char server_ip[16] = "";// 16 = (max length of ipv4 string) + 1
 	logwarn("Start program");
 	validArguments(argc, argv, server_ip, &server_port);
 
@@ -37,7 +38,7 @@ int main(int argc, char *argv[]) {
 	/* Init poll stdin, stdout, client_sock */
 	struct pollfd polls[POLLS];
 	polls[0].fd = 0; 
-	polls[0].events = POLLIN;				// STDIN
+	polls[0].events = POLLOUT|POLLRDNORM;				// STDIN
 	polls[1].fd = client_sock;
 	polls[1].events = POLLIN;	// client_sock
 
@@ -51,14 +52,13 @@ int main(int argc, char *argv[]) {
 	}
 
 	method = get_user_method(0);
-	int revents;
+	if(method==LOGOUT) goto end_process;
 	while(1){
 		revents = poll(polls, POLLS, 100000);
-		loginfo("revents:[%d]\n",revents);
 		if (revents > 0) {
-			if (polls[0].revents & POLLIN) {
+			if (polls[0].revents & (POLLOUT|POLLRDNORM)) {
 				if(method==SENDFILE)
-					fprintf(stderr,"Enter file name:");
+					printf("Enter file name:");
 
 				bzero(buff, BUFF_SIZE);
 				fgets(buff, BUFF_SIZE, stdin);
@@ -79,9 +79,8 @@ int main(int argc, char *argv[]) {
 					break;
 				}
 			}
-			loginfo("Echo reply poll [%d][%d]",polls[1].revents,POLLOUT);
+			 
 			if (polls[1].revents & POLLIN) {
-				loginfo("Echo reply poll [%d]",polls[1].revents);
 				/* receive echo reply */
 				bytes_received = recv(client_sock, buff, BUFF_SIZE-1, 0);
 				if(bytes_received <= 0){
@@ -113,7 +112,7 @@ int main(int argc, char *argv[]) {
 			printf("Timeout!");
 		}
 	}
-
+	end_process:
 	close(client_sock);
 	return 0;
 }
