@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
 	int revents;
 	loginfo("start poll");
 	while(1){
-		revents = poll(polls, POLLS, 100000);		/* Timeout = 10s */
+		revents = poll(polls, POLLS, 10000);		/* Timeout = 10s */
 		if (revents > 0) {
 			/* Process new connection */
 			if (polls[0].revents & POLLIN) {
