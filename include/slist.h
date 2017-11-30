@@ -2,6 +2,7 @@
 #define SLIST_H
 
 typedef void *Var;
+
 typedef struct _Node Node;
 
 struct _Node{
