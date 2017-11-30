@@ -5,7 +5,12 @@ int init_cache_context(){
 }
 
 TSFileCache * new_file_cache(Session* session,char* file_name){
-    return NULL;
+    TSFileCache* cache = tsalloc(TSFileCache,1);
+    if(!cache)
+        return NULL;
+    cache->file_name = file_name;
+    cache->session = copy_session(session);
+    return cache;
 }
 
 int add_file_to_cache(CacheList** list,TSFileCache *file_cache){
