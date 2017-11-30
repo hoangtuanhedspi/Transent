@@ -62,24 +62,25 @@ _Bool isEqualSockAddrIn (struct sockaddr_in *addr1, struct sockaddr_in *addr2) {
 Session* copy_session(Session* session){
     Session *copy = tsalloc(Session,1);
     if(!copy) return NULL;
-    clone_session(copy,session);
+    if(clone_session(copy,session)==-1)
+        return NULL;
     return copy;
 }
 
 int clone_session(Session *des,Session* res){
     if(!des || !res) return -1;
+    
     des->connfd = res->connfd;
 
     if(!res->cliaddr){
         des->cliaddr = res->cliaddr;
         return 1;
     }
-
+    
     if(!des->cliaddr)
         des->cliaddr = tsalloc(struct sockaddr_in,1);
-
-    bzero(des->cliaddr,sizeof(struct sockaddr_in));
-
+    if(!des->cliaddr) return -1;
+    
     memcpy(des->cliaddr,res->cliaddr,
            sizeof(struct sockaddr_in));
     return 1;

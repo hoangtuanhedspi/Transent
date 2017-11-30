@@ -3,7 +3,8 @@
         "util.h": "c",
         "interface.h": "c",
         "tsfmanage.h": "c",
-        "session.h": "c"
+        "session.h": "c",
+        "slist.h": "c"
     },
     "files.autoSave": "onFocusChange"
 }
