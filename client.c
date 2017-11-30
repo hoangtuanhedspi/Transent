@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
 
 	/* Init poll stdin, stdout, client_sock */
 	polls[0].fd = 0; 
-	polls[0].events = POLLOUT|POLLRDNORM;
+	polls[0].events = POLLIN;//OUT|POLLRDNORM;
 	polls[1].fd = client_sock;
 	polls[1].events = POLLIN;
 
@@ -65,9 +65,9 @@ int main(int argc, char *argv[]) {
 	while(1){
 		revents = poll(polls, POLLS, 20000);
 		if (revents > 0) {
-			if (polls[0].revents & (POLLOUT|POLLRDNORM)) {
+			if (polls[0].revents & POLLIN){//OUT|POLLRDNORM)) {
 				if(method==SENDFILE)
-					printf("Enter file name:");
+					fprintf(stderr,"Enter file name:");
 
 				bzero(payload,PAY_LEN);
 				add_request(buff,RQ_FILE);
@@ -102,9 +102,11 @@ int main(int argc, char *argv[]) {
 				if(req_response == RQ_FILE){
 					char* filename = detach_payload(buff);
 					loginfo("filename:%s\n",filename);
-
+					add_request(buff,RP_FOUND);
+					attach_payload(buff,"",0);
+					msg_len = get_real_len(buff);
 					if(existFile(DATA_PATH,filename)){
-						printf("File exist!\n");
+						send(client_sock, buff, msg_len, 0);
 					}
 				}
 			}

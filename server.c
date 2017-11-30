@@ -145,6 +145,8 @@ void process(struct pollfd *po) {
 					loginfo("Response:%dbyte\n",bytes_sent);
 				}
 			}
+		}else if(req_method==RP_FOUND){
+			loginfo("\nFile founded!\n");
 		}
 		/* Print list of client has file */
 
