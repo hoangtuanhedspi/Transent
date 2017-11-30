@@ -1,6 +1,8 @@
+#include <string.h>
 #include "../include/session.h"
 #include "../include/util.h"
-Session *findSessionByConnfd (int connfd) {
+
+Session *findSessionByConnfd (Session* sessions,int connfd) {
     int i;
     for (i = 0; i < SESSIONS; i++) {
         if (sessions[i].connfd == connfd) {
@@ -11,7 +13,7 @@ Session *findSessionByConnfd (int connfd) {
     return NULL;
 }
 
-_Bool newSession (struct sockaddr_in *cliaddr, int connfd) {
+_Bool newSession (Session* sessions,struct sockaddr_in *cliaddr, int connfd) {
     int i;
     for (i = 0; i < SESSIONS; i++) {
         if (sessions[i].cliaddr == NULL) {
@@ -24,7 +26,7 @@ _Bool newSession (struct sockaddr_in *cliaddr, int connfd) {
     return 0;
 }
 
-_Bool removeSession (Session *ss) {
+_Bool removeSession (Session* sessions,Session *ss) {
     for (int i = 0; i < SESSIONS; i++) {
         if (isSameSession(sessions + i, ss)) {
             sessions[i].cliaddr = NULL;
@@ -37,7 +39,7 @@ _Bool removeSession (Session *ss) {
     return 0;
 }
 
-_Bool isSameSession (Session *ss1, Session *ss2) {
+_Bool isSameSession(Session *ss1, Session *ss2) {
     if (ss1 == NULL || ss2 == NULL) {
         return 0;
     } else if (isEqualSockAddrIn(ss1->cliaddr, ss2->cliaddr) && ss1->connfd == ss2->connfd)
@@ -46,7 +48,7 @@ _Bool isSameSession (Session *ss1, Session *ss2) {
         return 0; 
 }
 
-void initSessions () {
+void initSessions(Session* sessions) {
     for (int i = 0; i < SESSIONS; i++) {
         sessions[i].cliaddr = NULL;
         sessions[i].connfd = -1;
@@ -55,4 +57,30 @@ void initSessions () {
 
 _Bool isEqualSockAddrIn (struct sockaddr_in *addr1, struct sockaddr_in *addr2) {
     return (addr1->sin_addr.s_addr == addr2->sin_addr.s_addr && addr1->sin_port == addr2->sin_port);
+}
+
+Session* copy_session(Session* session){
+    Session *copy = tsalloc(Session,1);
+    if(!copy) return NULL;
+    clone_session(copy,session);
+    return copy;
+}
+
+int clone_session(Session *des,Session* res){
+    if(!des || !res) return -1;
+    des->connfd = res->connfd;
+
+    if(!res->cliaddr){
+        des->cliaddr = res->cliaddr;
+        return 1;
+    }
+
+    if(!des->cliaddr)
+        des->cliaddr = tsalloc(struct sockaddr_in,1);
+
+    bzero(des->cliaddr,sizeof(struct sockaddr_in));
+
+    memcpy(des->cliaddr,res->cliaddr,
+           sizeof(struct sockaddr_in));
+    return 1;
 }
