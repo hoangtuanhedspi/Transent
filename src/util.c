@@ -1,5 +1,7 @@
 #include<stdlib.h>
 #include<stdio.h>
+#include<string.h>
+#include "../include/interface.h"
 #include "../include/util.h"
 
 MenuAction get_user_method(int logedin){

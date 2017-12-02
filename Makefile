@@ -10,7 +10,7 @@ SRCEXT := c
 SOURCES := $(shell find $(SRCDIR) -type f -name '*.$(SRCEXT)')
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
 CFLAGS :=  
-LIB := -L./bin/lib -ltransent
+LIB := -L./bin/lib -ltransent #-lncurses
 INC := -I./bin/include
 
 all: lib client server
@@ -21,7 +21,7 @@ $(TARGET): transent.c
 $(LIBS): $(OBJECTS)
 	if [ ! -d "$(SHAREDDIR)" ];then mkdir -p $(SHAREDDIR); fi;
 	if [ ! -d "$(SHAREDINC)" ];then mkdir -p $(SHAREDINC); fi;
-	cp -R include/ $(SHAREDINC)
+	cp -R include/*.h $(SHAREDINC)
 	ar rcs $@ $(OBJECTS)
 
 $(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT)

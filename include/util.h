@@ -21,7 +21,6 @@
 
 #ifndef _TRANSENT_UTIL_
 #define _TRANSENT_UTIL_
-#include "interface.h"
 /**
  * @file
  * Utilities function for Transent
