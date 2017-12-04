@@ -1,14 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <transent/directory.h>
+#include "../include/user.h"
 
-#define A 0x0001
-#define B 0x0000 >> 1
+#define USERS 100
+#define USER_FILE "tests/user.txt"
 
 int main(int argc, char* argv[]){
-    int a[6] = {1,3,4,5,8,7},b = 0;
-    for (b = 0;a[b]!=10,b<5;b++);
-    printf("%d:%d\n",a[b],b);
-    printListFile("/Users/anonymousjp/Desktop/");
+    User users[USERS];
+
+    readUsers(USER_FILE, users, USERS);
+    int i = indexOfUser("haihv", users, USERS);
+    printf("%d\n", i);
+
+    for (int i = 0; i < USERS; i++) {
+        if (users[i].id[0] != '\0') {
+            printf("%s | %s | %d\n", users[i].id, users[i].pass, users[i].status);
+        }
+    }
+
     return 0;
 }
