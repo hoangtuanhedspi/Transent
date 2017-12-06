@@ -39,6 +39,8 @@ _Bool removeSession (char *sessionId, Session sessions[], int max_sessions) {
 
     /* Remove session */
     sessions[target].id[0] = '\0';
+    sessions[target].cliaddr = NULL;
+    sessions[target].connfd = -1;
 
     return 1;
 }
@@ -61,6 +63,15 @@ _Bool newSession (struct sockaddr_in *cliaddr, int connfd, Session sessions[], i
     sessions[emptySession].no_login_fail = 0;
 
     return 1;
+}
+
+Session *findSessionByConnfd (int connfd, Session sessions[], int max_sessions) {
+    for (int i = 0; i < max_sessions; i++) {
+        if (sessions[i].connfd != -1 && sessions[i].connfd == connfd)
+            return (sessions + i);
+    }
+
+    return NULL;
 }
 
 int indexOfSession (char *sessionId, Session sessions[], int max_sessions) {
@@ -86,6 +97,8 @@ int indexOfEmptySession (Session sessions[], int max_sessions) {
 void initSessions (Session sessions[], int max_sessions) {
     for (int i = 0; i < max_sessions; i++) {
         sessions[i].id[0] = '\0';
+        sessions[i].cliaddr = NULL;
+        sessions[i].connfd = -1;
     }
 }
 

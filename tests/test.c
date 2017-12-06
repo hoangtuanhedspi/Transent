@@ -37,10 +37,13 @@ int main(int argc, char* argv[]){
 
     printSessions(sessions, SESSIONS);
 
-    printf("%s\n", sessions[0].user->id);
-    printf("%s\n", sessions[1].user->id);
-    printf("%s\n", sessions[2].user->id);
-    printf("%s\n", sessions[3].user->id);
+    for (int i = 4; i <= 7; i++) {
+        Session *ss = findSessionByConnfd(i, sessions, SESSIONS);
+        if (ss != NULL)
+            printf("%s\n", ss->user->id);
+        else
+            printf("NOT FOUND\n");
+    }
 
     return 0;
 }

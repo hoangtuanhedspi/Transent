@@ -30,6 +30,7 @@ _Bool updateSessionState (char *sessionId, enum SessionState state, Session sess
 _Bool updateSessionUser (char *sessionId, User *user, Session sessions[], int max_sessions);
 _Bool removeSession (char *sessionId, Session sessions[], int max_sessions);
 _Bool newSession (struct sockaddr_in *cliaddr, int connfd, Session sessions[], int max_sessions);
+Session *findSessionByConnfd (int connfd, Session sessions[], int max_sessions);
 int indexOfSession (char *sessionId, Session sessions[], int max_sessions);
 int indexOfEmptySession (Session sessions[], int max_sessions);
 void initSessions (Session sessions[], int max_sessions);
