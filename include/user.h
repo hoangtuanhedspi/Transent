@@ -25,6 +25,8 @@ int indexOfUser (char *id, User users[], int max_users);
 void writeUsers (char *file_name, User users[], int max_users);
 void readUsers (char *file_name, User users[], int max_users);
 _Bool isFullUsers (User users[], int max_users);
+void initUsers (User users[], int max_users);
+void printUsers (User users[], int max_users);
 FILE *openFile (char *file_name, char *mode);
 
 #endif

@@ -14,6 +14,7 @@ int main(int argc, char* argv[]){
     initSessions(sessions, SESSIONS);
 
     readUsers(USER_FILE, users, USERS);
+    printUsers(users, USERS);
     
     struct sockaddr_in *sock = (struct sockaddr_in *) malloc(sizeof(struct sockaddr_in));
     newSession(sock, 4, sessions, SESSIONS);

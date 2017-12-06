@@ -34,10 +34,7 @@ void writeUsers (char *file_name, User users[], int max_users) {
 void readUsers (char *file_name, User users[], int max_users) {
     FILE *f = openFile(file_name, "r");
 
-    /* Init/reset users[] */
-    for (int i = 0; i < max_users; i++) {
-        users[i].id[0] = '\0';
-    }
+    initUsers(users, max_users);
 
     /* Store users from file to array users */
     int i = 0;
@@ -63,6 +60,19 @@ _Bool isFullUsers (User users[], int max_users) {
     }
 
     return 1;
+}
+
+void initUsers (User users[], int max_users) {
+    for (int i = 0; i < max_users; i++) {
+        users[i].id[0] = '\0';
+    }
+}
+
+void printUsers (User users[], int max_users) {
+    for (int i = 0; i < max_users; i++) {
+        if (users[i].id[0] != '\0')
+            printf("%s | %s | %d\n", users[i].id, users[i].pass, users[i].state);
+    }
 }
 
 FILE *openFile (char *file_name, char *mode) {
