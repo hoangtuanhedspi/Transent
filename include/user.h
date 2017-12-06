@@ -9,7 +9,7 @@
 #define USER_ID_LEN 30
 #define PASS_LEN 30
 
-enum UserStatus { 
+enum UserState { 
     BLOCKED,
     ACTIVE
 };
@@ -17,7 +17,7 @@ enum UserStatus {
 typedef struct User_ {
     char id[USER_ID_LEN + 1];
     char pass[PASS_LEN + 1];
-    enum UserStatus status;
+    enum UserState state;
 } User;
 
 User *findUserById (char *id, User users[], int max_users);

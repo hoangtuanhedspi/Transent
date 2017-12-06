@@ -24,7 +24,7 @@ void writeUsers (char *file_name, User users[], int max_users) {
     /* Store users from array users to file */
     for (int i = 0; i < max_users; i++) {
         if (users[i].id[0] != '\0') {
-            fprintf(f, "%s %s %d\n", users[i].id, users[i].pass, users[i].status);
+            fprintf(f, "%s %s %d\n", users[i].id, users[i].pass, users[i].state);
         }
     }
 
@@ -44,7 +44,7 @@ void readUsers (char *file_name, User users[], int max_users) {
     while (i < max_users) {
         if (feof(f)) break;
 
-        fscanf(f, "%s %s %d", users[i].id, users[i].pass, &(users[i].status));
+        fscanf(f, "%s %s %d", users[i].id, users[i].pass, &(users[i].state));
 
         // Ignore blank last line of file
         if (users[i].id[0] == '\0' || users[i].pass[0] == '\0') break;
