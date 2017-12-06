@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "transent/user.h"
 #include "transent/ss.h"
+#include "transent/authen.h"
 
 #define USERS 100
 #define SESSIONS 100
@@ -25,25 +26,30 @@ int main(int argc, char* argv[]){
     updateSessionUser("2", users + 2, sessions, SESSIONS);
     updateSessionUser("3", users + 3, sessions, SESSIONS);
 
-    updateSessionState("0", NOT_AUTHENTICATED, sessions, SESSIONS);
-    updateSessionState("1", AUTHENTICATED, sessions, SESSIONS);
-    updateSessionState("2", USER_BLOCKED, sessions, SESSIONS);
-    updateSessionState("3", NOT_IDENTIFIED_USER, sessions, SESSIONS);
+    // updateSessionState("0", NOT_AUTHENTICATED, sessions, SESSIONS);
+    // updateSessionState("1", AUTHENTICATED, sessions, SESSIONS);
+    // updateSessionState("2", USER_BLOCKED, sessions, SESSIONS);
+    // updateSessionState("3", NOT_IDENTIFIED_USER, sessions, SESSIONS);
 
     // removeSession("0", sessions, SESSIONS);
-    removeSession("1", sessions, SESSIONS);
+    // removeSession("1", sessions, SESSIONS);
     // removeSession("2", sessions, SESSIONS);
-    removeSession("3", sessions, SESSIONS);
+    // removeSession("3", sessions, SESSIONS);
+
+    loginUser(4, "haihv", sessions, SESSIONS, users, USERS);
+    loginUser(5, "admin", sessions, SESSIONS, users, USERS);
+    loginUser(6, "notfound", sessions, SESSIONS, users, USERS);
+    loginUser(7, "block", sessions, SESSIONS, users, USERS);
 
     printSessions(sessions, SESSIONS);
 
-    for (int i = 4; i <= 7; i++) {
-        Session *ss = findSessionByConnfd(i, sessions, SESSIONS);
-        if (ss != NULL)
-            printf("%s\n", ss->user->id);
-        else
-            printf("NOT FOUND\n");
-    }
+    // for (int i = 4; i <= 7; i++) {
+    //     Session *ss = findSessionByConnfd(i, sessions, SESSIONS);
+    //     if (ss != NULL)
+    //         printf("%s\n", ss->user->id);
+    //     else
+    //         printf("NOT FOUND\n");
+    // }
 
     return 0;
 }
