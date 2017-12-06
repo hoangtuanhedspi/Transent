@@ -30,15 +30,6 @@ _Bool updateSessionUser (char *sessionId, User *user, Session sessions[], int ma
     return 1;
 }
 
-// typedef struct Session_ {
-//     char id[ID_LEN];
-//     User *user;
-//     enum SessionState state;
-//     struct sockaddr_in *cliaddr;
-//     int connfd;
-//     int no_login_fail;
-// } Session;
-
 _Bool removeSession (char *sessionId, Session sessions[], int max_sessions) {
     int target = indexOfSession(sessionId, sessions, max_sessions);
     if (target == -1) {     // Not found session
@@ -103,4 +94,12 @@ char *hashId () {
     char *str = (char *) malloc(ID_LEN * sizeof(char));
     sprintf(str, "%d", id++);
     return str;
+}
+
+void printSessions (Session sessions[], int max_sessions) {
+    for (int i = 0; i < max_sessions; i++) {
+        if (sessions[i].id[0] != '\0') {
+            printf("%s | %d | %d | %d | %d | %d\n", sessions[i].id, sessions[i].user, sessions[i].state, sessions[i].cliaddr, sessions[i].connfd, sessions[i].no_login_fail);
+        }
+    }
 }

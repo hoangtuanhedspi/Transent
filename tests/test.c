@@ -30,16 +30,12 @@ int main(int argc, char* argv[]){
     updateSessionState("2", USER_BLOCKED, sessions, SESSIONS);
     updateSessionState("3", NOT_IDENTIFIED_USER, sessions, SESSIONS);
 
-    removeSession("0", sessions, SESSIONS);
+    // removeSession("0", sessions, SESSIONS);
     removeSession("1", sessions, SESSIONS);
-    removeSession("2", sessions, SESSIONS);
+    // removeSession("2", sessions, SESSIONS);
     removeSession("3", sessions, SESSIONS);
 
-    for (int i = 0; i < SESSIONS; i++) {
-        if (sessions[i].id[0] != '\0') {
-            printf("%s | %d | %d | %d | %d | %d\n", sessions[i].id, sessions[i].user, sessions[i].state, sessions[i].cliaddr, sessions[i].connfd, sessions[i].no_login_fail);
-        }
-    }
+    printSessions(sessions, SESSIONS);
 
     printf("%s\n", sessions[0].user->id);
     printf("%s\n", sessions[1].user->id);
