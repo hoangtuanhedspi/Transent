@@ -25,6 +25,7 @@ Node *n_append(Node *list, Var data){
   if (list->data==NULL)
   {
     list->data = data;
+    return list;
   }
   return append(&list,data);
 }
@@ -149,6 +150,6 @@ Node *find_data(Node *list,
       return tmp;
 		}
     tmp = tmp->next;
-	}
+  }
 	return NULL;
 }
