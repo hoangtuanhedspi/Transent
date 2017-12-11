@@ -10,7 +10,8 @@
         "e4c.h": "c",
         "inet.h": "c",
         "progressbar.h": "c",
-        "statusbar.h": "c"
+        "statusbar.h": "c",
+        "directory.h": "c"
     },
     "files.autoSave": "onFocusChange"
 }
