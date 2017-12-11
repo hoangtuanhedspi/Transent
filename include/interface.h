@@ -27,36 +27,49 @@
 
 
 //! Data stream buffer information
-//Size of data stream buffer
-#define BUFF_SIZE   2056
-#define HEADER_LEN  8
+//Number of packet in header
+#define PACK_COUNT  3
+//Size for each packet
 #define PACK_SIZE   4
-#define PAY_LEN     BUFF_SIZE - HEADER_LEN
+//Header len cal
+#define HEADER_LEN  (PACK_SIZE*PACK_COUNT)
+//Payload len
+#define PAY_LEN     3072
+//Size of data stream buffer
+#define BUFF_SIZE   (PAY_LEN+HEADER_LEN)
 
 //! Request method info stored on HEADER of data stream 
 //Request file method
 #define RQ_FILE     0x0001
 //Request file failed
 #define RQ_FAIL     0x0001 << 1
-//
-#define WAIT_RQ     0x0001 << 2
+//Request download file
+#define RQ_DL       0x0001 << 6
+//Notify infor
+#define NOTI_INF    0x0001 << 2
 //Response file was found
 #define RP_FOUND    0x0001 << 3
 //Response file not found
 #define RP_NFOUND   0x0001 << 4
+//Response list client struct
+#define RP_FLIST    0x0001 << 5
 //Undefine method
 #define UNDEFINE    -1
+//Stick end of data stream
+#define EOF_FILE    0
+//Stick data stream continue transfer
+#define FSTREAM     1
 
 /**
  * Identify the packet position in buffer stream.
  * If you add a packet position to this list, add it so that
- * 1. \ref BUFF_SIZE also add more 4byte at define
- * 2. Give \ref HEADER_LEN more 4byte for one packet added
+ * \ref PAKETCOUNT also add more 4byte at define
  */
 typedef enum _pack_position{
     PACK_EMPTY,
     PACK_METHOD,
     PACK_PAYSIZE,
+    PACK_WIDEN,
     PACK_PAYLOAD
 }PackPosition;
 
@@ -68,5 +81,9 @@ int detach_payload2(char* buff,char* payload);
 int get_payload_size(char* buff);
 int valid_method(int method);
 int get_real_len(char* buff);
+/*
+add_request(buff,LOGIN);
+attach_payload(buff,"user:pass",10);
 
+*/
 #endif
