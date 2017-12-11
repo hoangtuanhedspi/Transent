@@ -19,6 +19,7 @@ _Bool removeSession (Session* sessions,Session *ss);
 _Bool isSameSession (Session *ss1, Session *ss2);
 void initSessions (Session* sessions);
 _Bool isEqualSockAddrIn (struct sockaddr_in *addr1, struct sockaddr_in *addr2);
+extern int session_size();
 extern Session* copy_session(Session* session);
 extern int clone_session(Session *des,Session* res);
 #endif

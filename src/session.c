@@ -1,7 +1,7 @@
 #include <string.h>
 #include "../include/session.h"
 #include "../include/util.h"
-
+int session_count;
 Session *findSessionByConnfd (Session* sessions,int connfd) {
     int i;
     for (i = 0; i < SESSIONS; i++) {
@@ -9,7 +9,6 @@ Session *findSessionByConnfd (Session* sessions,int connfd) {
             return sessions + i;
         }
     }
-
     return NULL;
 }
 
@@ -19,7 +18,7 @@ _Bool newSession (Session* sessions,struct sockaddr_in *cliaddr, int connfd) {
         if (sessions[i].cliaddr == NULL) {
             sessions[i].cliaddr = cliaddr;
             sessions[i].connfd = connfd;
-
+            session_count++;
             return 1;
         }
     }
@@ -31,7 +30,7 @@ _Bool removeSession (Session* sessions,Session *ss) {
         if (isSameSession(sessions + i, ss)) {
             sessions[i].cliaddr = NULL;
             sessions[i].connfd = -1;
-            
+            --session_count;
             return 1;
         }
     }
@@ -57,6 +56,10 @@ void initSessions(Session* sessions) {
 
 _Bool isEqualSockAddrIn (struct sockaddr_in *addr1, struct sockaddr_in *addr2) {
     return (addr1->sin_addr.s_addr == addr2->sin_addr.s_addr && addr1->sin_port == addr2->sin_port);
+}
+
+int session_size(){
+    return session_count;
 }
 
 Session* copy_session(Session* session){
