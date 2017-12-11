@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "transent/user.h"
-#include "transent/ss.h"
+#include "transent/session.h"
 #include "transent/authen.h"
 
 #define USERS 100
@@ -13,6 +13,7 @@ int main(int argc, char* argv[]){
     Session sessions[SESSIONS];
     initSessions(sessions, SESSIONS);
 
+
     readUsers(USER_FILE, users, USERS);
     printUsers(users, USERS);
     
@@ -21,11 +22,11 @@ int main(int argc, char* argv[]){
     newSession(sock, 5, sessions, SESSIONS);
     newSession(sock, 6, sessions, SESSIONS);
     newSession(sock, 7, sessions, SESSIONS);
-    
-    updateSessionUser("0", users, sessions, SESSIONS);
-    updateSessionUser("1", users + 1, sessions, SESSIONS);
-    updateSessionUser("2", users + 2, sessions, SESSIONS);
-    updateSessionUser("3", users + 3, sessions, SESSIONS);
+
+    // updateSessionUser("0", users, sessions, SESSIONS);
+    // updateSessionUser("1", users + 1, sessions, SESSIONS);
+    // updateSessionUser("2", users + 2, sessions, SESSIONS);
+    // updateSessionUser("3", users + 3, sessions, SESSIONS);
 
     // updateSessionState("0", NOT_AUTHENTICATED, sessions, SESSIONS);
     // updateSessionState("1", AUTHENTICATED, sessions, SESSIONS);
@@ -41,6 +42,20 @@ int main(int argc, char* argv[]){
     loginUser(5, "admin", sessions, SESSIONS, users, USERS);
     loginUser(6, "notfound", sessions, SESSIONS, users, USERS);
     loginUser(7, "block", sessions, SESSIONS, users, USERS);
+
+    loginPass(4, "wrong", sessions, SESSIONS, users, USERS);
+    loginPass(4, "wrong", sessions, SESSIONS, users, USERS);
+    loginPass(4, "wrong", sessions, SESSIONS, users, USERS);
+    loginPass(4, "wrong", sessions, SESSIONS, users, USERS);
+    // loginPass(4, "haihv", sessions, SESSIONS, users, USERS);
+    loginPass(5, "admin", sessions, SESSIONS, users, USERS);
+    loginPass(6, "notfound", sessions, SESSIONS, users, USERS);
+    loginPass(7, "block", sessions, SESSIONS, users, USERS);
+
+    logout(4, "haihv", "wrong", sessions, SESSIONS, users, USERS);
+    logout(5, "admin", "admin", sessions, SESSIONS, users, USERS);
+    logout(6, "notfound", "notfound", sessions, SESSIONS, users, USERS);
+    logout(7, "block", "block", sessions, SESSIONS, users, USERS);
 
     printSessions(sessions, SESSIONS);
 

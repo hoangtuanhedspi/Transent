@@ -2,7 +2,7 @@
 #define AUTHEN_H
 
 #include "user.h"
-#include "ss.h"
+#include "session.h"
 
 enum LoginUserState {
     LU_SUCCESS,                     // Login-user successful (define user)
@@ -28,9 +28,8 @@ enum LogoutState {
     LO_USER_BLOCKED                 // User is blocked
 };
 
-enum LogoutState logout (struct sockaddr_in *cliaddr, int connfd, char *id, char *pass);
-enum LoginPassState loginPass (struct sockaddr_in *cliaddr, int connfd, char *pass);
+enum LogoutState logout (int connfd, char *user_id, char *pass, Session sessions[], int max_sessions, User users[], int max_users);
+enum LoginPassState loginPass (int connfd, char *pass, Session sessions[], int max_sessions, User users[], int max_users);
 enum LoginUserState loginUser (int connfd, char *user_id, Session sessions[], int max_sessions, User users[], int max_users);
-// enum SessionState sessionState (struct sockaddr_in *cliaddr, int connfd);
 
 #endif
