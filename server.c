@@ -3,20 +3,22 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <strings.h>
+#include <string.h>
 #include <ctype.h>
 
 #define DEBUG 1
-#include<transent/util.h>
+#include <transent/util.h>
 #include <transent/session.h>
 #include <transent/mypoll.h>
 #include <transent/interface.h>
+#include <transent/tsfmanage.h>
 
 #define BACKLOG 100  	 		/* Number of allowed connections */
 #define DATA_PATH "./db"
 
 Session sessions[SESSIONS];
-
+Queue *req_queue = NULL;
+CacheList* cache_list = NULL;
 /* Process command from client end return */
 void process(struct pollfd *po);
 
@@ -30,7 +32,7 @@ int main(int argc, char *argv[]) {
 	int port = 0;
 	// checking arguments
 	validArguments(argc, argv, &port);
-
+	init_cache_context(&cache_list);
 	int listenfd, *connfd;
 	struct sockaddr_in server; 		/* server's address information */
 	struct sockaddr_in *client; 	/* client's address information */
@@ -131,22 +133,42 @@ void process(struct pollfd *po) {
 		closeConnection(po, ss);
 	} else {
 		req_method = parse_packet(buff,payload,&payload_size);
-		loginfo("Info:%d\n",req_method);
+		loginfo("Info:%d|%s\n",req_method,payload);
 		if(req_method==RQ_FILE){
-			loginfo("\nFind file: %s || bufflen: %d byte\n",detach_payload(buff),get_real_len(buff));
-			add_request(buff,RQ_FILE);
-			attach_payload(buff,payload,payload_size);
-			for (int i = 0; i < SESSIONS; i++) {
-				if (sessions[i].connfd != -1 && !isSameSession(sessions + i, ss)) {
-					bytes_sent = get_real_len(buff);
-					bytes_sent = send(sessions[i].connfd,buff, bytes_sent, 0);
-					if (bytes_sent < 0)
-						perror("\nError: ");
-					loginfo("Response:%dbyte\n",bytes_sent);
+			int i = 0;
+			if(session_size()>1){
+				Request* request = make_request(ss,payload);
+				wrap_packet(buff,payload,payload_size,RQ_FILE);
+				enqueue(&req_queue,request);
+				printf("Queue size:%d\n",length(req_queue));
+				for (i = 0; i < SESSIONS; i++) {
+					if (sessions[i].connfd != -1 && !isSameSession(sessions + i, ss)) {
+						bytes_sent = get_real_len(buff);
+						bytes_sent = send(sessions[i].connfd,buff, bytes_sent, 0);
+						if (bytes_sent < 0)
+							perror("\nError: ");
+						loginfo("Response:%dbyte\n",bytes_sent);
+					}
 				}
 			}
+			else{
+				bytes_sent = wrap_packet(buff,"Have nomore than this client!",29,NOTI_INF);
+				bytes_sent = send(ss->connfd,buff, bytes_sent, 0);
+				if (bytes_sent < 0)
+					perror("\nError: ");
+			}
 		}else if(req_method==RP_FOUND){
-			loginfo("\nFile founded!\n");
+			loginfo("Founded!");
+			Cache* cache = new_cache(payload,payload);
+			if(!cache_contain(cache_list,cache))
+				push_cache(cache_list,cache);
+			loginfo("pass cache contain!");
+			printf("Cache size:%d\n",get_all_cache_size());
+		}else if(req_method == RP_NFOUND){
+			loginfo("File not found!");
+			Request* request = make_request(ss,payload);
+			drop_request(&req_queue,request);
+			printf("Queue size:%d\n",length(req_queue));
 		}
 		/* Print list of client has file */
 

@@ -21,7 +21,6 @@
 
 #ifndef _TRANSENT_UTIL_
 #define _TRANSENT_UTIL_
-#include "interface.h"
 /**
  * @file
  * Utilities function for Transent
@@ -38,11 +37,15 @@
 #else
 #define logerr(M, ...)
 #define logwarn(M, ...)
-#define loginfo(M, ...) 
+#define loginfo(M, ...)
 #define check(A, M, ...)
 #define check_mem(A)
 #endif
+#include "slist.h"
+#include "session.h"
+#include "tsfmanage.h"
 
+#define MAX_SYNC_SIZE 24
 #define ARGERR "Error: Too few arguments!\n"
 #define PARGERR "Error: Invalid port argument!\n"
 #define ADDERR "Error: Invalid address argument!\n"
@@ -55,8 +58,22 @@ typedef enum _action{
     LOGOUT
 }MenuAction;
 
+typedef struct _request{
+    Session *session;
+    char* file_name;
+}Request;
+
+typedef Node Queue;
+
 MenuAction get_user_method(int logedin);
 MenuAction valid_action(MenuAction action);
 int parse_packet(char* buff,char* payload,int* size);
-
+int wrap_packet(char* buff,char* payload,int size,int method);
+extern Request* enqueue(Queue** queue,Request * request);
+extern Request* dequeue(Queue** queue);
+extern Request* new_request_object(Session* session, char * file_name);
+extern char* clone_string(char* src);
+extern Request* make_request(Session* session,char* file_name);
+extern int get_list_request(CacheList* list,Cache* cache,char* file_name);
+extern int drop_request(Queue** queue,Request* req);
 #endif

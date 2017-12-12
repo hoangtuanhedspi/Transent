@@ -1,6 +1,5 @@
 #include <string.h>
 #include "../include/session.h"
-#include "../include/util.h"
 
 _Bool updateSessionState (char *sessionId, enum SessionState state, Session sessions[], int max_sessions) {
     int target = indexOfSession(sessionId, sessions, max_sessions);
@@ -126,6 +125,37 @@ char *hashId () {
     sprintf(str, "%d", id++);
     return str;
 }
+
+// int session_size(){
+//     return session_count;
+// }
+
+// Session* copy_session(Session* session){
+//     Session *copy = tsalloc(Session,1);
+//     if(!copy) return NULL;
+//     if(clone_session(copy,session)==-1)
+//         return NULL;
+//     return copy;
+// }
+
+// int clone_session(Session *des,Session* res){
+//     if(!des || !res) return -1;
+    
+//     des->connfd = res->connfd;
+
+//     if(!res->cliaddr){
+//         des->cliaddr = res->cliaddr;
+//         return 1;
+//     }
+    
+//     if(!des->cliaddr)
+//         des->cliaddr = tsalloc(struct sockaddr_in,1);
+//     if(!des->cliaddr) return -1;
+    
+//     memcpy(des->cliaddr,res->cliaddr,
+//            sizeof(struct sockaddr_in));
+//     return 1;
+// }
 
 void printSessions (Session sessions[], int max_sessions) {
     for (int i = 0; i < max_sessions; i++) {

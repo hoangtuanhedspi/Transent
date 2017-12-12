@@ -15,7 +15,7 @@
 #include <transent/session.h>
 #include <transent/tsfmanage.h>
 #include <transent/slist.h>
-typedef Node CacheList;
+
 void test_interface(int argc, char* argv[]);
 void test_poll(int argc, char* argv[]);
 void test_directory(int argc, char* argv[]);
@@ -29,7 +29,7 @@ int main(int argc, char* argv[]){
     test_poll(argc,argv);
     test_session(argc,argv);
     test_tsfmanage(argc,argv);
-    void test_haihv(argc,argv);
+    test_haihv(argc,argv);
     return 0;
 }
 
@@ -99,18 +99,37 @@ void test_session(int argc, char* argv[]){
 }
 
 void test_tsfmanage(int argc, char* argv[]){
-    printf("==============TEST TSFMANAGE===============\n");
-    CacheList* cacheList = NULL;
-    TSFileCache *cache =  new_cache_file(NULL,"abc");
+    CacheList* list = NULL;
+    printf("Sizeof one cache:%d\n",sizeof(Cache));
+    init_cache_context(&list);
+    Queue* queue = NULL;
+    enqueue(&queue,make_request(NULL,"abc"));
+    enqueue(&queue,make_request(NULL,"def"));
+    printf("LOL:%s\n",((Request*)queue->data)->file_name);
+    Cache* cache = new_cache("abc","def");
+    assert(strcmp(cache->file_name,"abc")==0);
+    
+    push_cache(list,cache);
+    remove_cache(list,cache);
+    cache = new_cache("abc","def");
+    push_cache(list,cache);
+    push_cache(list,cache);
+    cache = new_cache("abg","duf");
+    push_cache(list,cache);
+    Cache* get = (Cache*)(get_at(list,2)->data);
 
-    if(cache->session==NULL){
-        printf("Run!\n");
-    }
-
-    append(&cacheList,cache);
-    TSFileCache* ca = get_data(cacheList);
-    assert(strcmp(ca->file_name,"abc")==0);
-    printf("File name:%s\n",ca->file_name);
+    assert(strcmp(get->file_name,"abg")==0);
+    if(!cache_contain(list,get))
+        printf("Cache Size:%d|In all:%d\n",get_cache_size(list),get_all_cache_size());
+    Cache req[24];
+    printf("Pass!\n");
+    int s = get_list_request(list,req,"abg");
+    int i = 0;
+    for (i=0;i<s;i++)
+        printf("Request file:%s\n",req[i].uid_hash);
+    
+    drop_request(&queue,make_request(NULL,"abc"));
+    printf("Queue size:%d\n",length(queue));
 }
 
 

@@ -13,6 +13,7 @@
 #define DEBUG 1
 #include <transent/util.h>
 #include <transent/interface.h>
+#include <transent/tsfmanage.h>
 #define POLLS 2
 #define DATA_PATH "./db"
 
@@ -91,6 +92,7 @@ int main(int argc, char *argv[]) {
 			if (polls[1].revents & POLLIN) {
 				/* receive echo reply */
 				int req_response = UNDEFINE;
+				bzero(buff,BUFF_SIZE);
 				bytes_received = recv(client_sock, buff, BUFF_SIZE-1, 0);
 				if(bytes_received <= 0){
 					printf("\nError!Cannot receive data from sever!\n");
@@ -102,16 +104,26 @@ int main(int argc, char *argv[]) {
 				if(req_response == RQ_FILE){
 					char* filename = detach_payload(buff);
 					loginfo("filename:%s\n",filename);
-					add_request(buff,RP_FOUND);
-					attach_payload(buff,"",0);
-					msg_len = get_real_len(buff);
 					if(existFile(DATA_PATH,filename)){
-						send(client_sock, buff, msg_len, 0);
+						add_request(buff,RP_FOUND);
+						attach_payload(buff,filename,0);
+						msg_len = get_real_len(buff);
+						msg_len = send(client_sock, buff, msg_len, 0);
+						loginfo("Founded!\n");
+					}else{
+						add_request(buff,RP_NFOUND);
+						msg_len = send(client_sock, buff, msg_len, 0);
+						loginfo("Not found:%s\n",buff+HEADER_LEN);
 					}
+					free(filename);
+				}else if(req_response == RP_FLIST){
+					
+				}else if(req_response == NOTI_INF){
+					printf("Server noti:%s\n",payload);
 				}
 			}
 		}else if(revents == 0){
-			printf("Timeout!");
+			printf("Timeout!\n");
 		}
 	}
 	end_process:

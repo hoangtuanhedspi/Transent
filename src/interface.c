@@ -27,7 +27,7 @@
 int pack(int at);
 
 void* add_request(char* buff,int method){
-    bzero(buff,BUFF_SIZE);
+    bzero(buff,HEADER_LEN);
     return memcpy(buff+pack(PACK_METHOD),&method,PACK_SIZE);
 }
 
