@@ -21,6 +21,7 @@ void test_poll(int argc, char* argv[]);
 void test_directory(int argc, char* argv[]);
 void test_session(int argc, char* argv[]);
 void test_tsfmanage(int argc, char* argv[]);
+void test_haihv(int argc, char* argv[]);
 
 int main(int argc, char* argv[]){
     test_directory(argc,argv);
@@ -28,6 +29,7 @@ int main(int argc, char* argv[]){
     test_poll(argc,argv);
     test_session(argc,argv);
     test_tsfmanage(argc,argv);
+    void test_haihv(argc,argv);
     return 0;
 }
 
@@ -109,4 +111,43 @@ void test_tsfmanage(int argc, char* argv[]){
     TSFileCache* ca = get_data(cacheList);
     assert(strcmp(ca->file_name,"abc")==0);
     printf("File name:%s\n",ca->file_name);
+}
+
+
+void test_haihv(int argc, char* argv[]){
+    User users[USERS];
+    Session sessions[SESSIONS];
+    initSessions(sessions, SESSIONS);
+
+
+    readUsers(USER_FILE, users, USERS);
+    printUsers(users, USERS);
+    
+    struct sockaddr_in *sock = (struct sockaddr_in *) malloc(sizeof(struct sockaddr_in));
+    newSession(sock, 4, sessions, SESSIONS);
+    newSession(sock, 5, sessions, SESSIONS);
+    newSession(sock, 6, sessions, SESSIONS);
+    newSession(sock, 7, sessions, SESSIONS);
+
+
+    loginUser(4, "haihv", sessions, SESSIONS, users, USERS);
+    loginUser(5, "admin", sessions, SESSIONS, users, USERS);
+    loginUser(6, "notfound", sessions, SESSIONS, users, USERS);
+    loginUser(7, "block", sessions, SESSIONS, users, USERS);
+
+    loginPass(4, "wrong", sessions, SESSIONS, users, USERS);
+    loginPass(4, "wrong", sessions, SESSIONS, users, USERS);
+    loginPass(4, "wrong", sessions, SESSIONS, users, USERS);
+    loginPass(4, "wrong", sessions, SESSIONS, users, USERS);
+    // loginPass(4, "haihv", sessions, SESSIONS, users, USERS);
+    loginPass(5, "admin", sessions, SESSIONS, users, USERS);
+    loginPass(6, "notfound", sessions, SESSIONS, users, USERS);
+    loginPass(7, "block", sessions, SESSIONS, users, USERS);
+
+    logout(4, "haihv", "wrong", sessions, SESSIONS, users, USERS);
+    logout(5, "admin", "admin", sessions, SESSIONS, users, USERS);
+    logout(6, "notfound", "notfound", sessions, SESSIONS, users, USERS);
+    logout(7, "block", "block", sessions, SESSIONS, users, USERS);
+
+    printSessions(sessions, SESSIONS);
 }
