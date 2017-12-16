@@ -33,7 +33,7 @@ int main(int argc, char* argv[]){
     test_poll(argc,argv);
     test_session(argc,argv);
     test_tsfmanage(argc,argv);
-    test_haihv(argc, argv);
+    test_haihv(argc,argv);
     return 0;
 }
 
@@ -102,7 +102,6 @@ void test_session(int argc, char* argv[]){
 }
 
 void test_tsfmanage(int argc, char* argv[]){
-    printf("==============TEST TSFMANAGE===============\n");
     CacheList* list = NULL;
     printf("Sizeof one cache:%d\n",sizeof(Cache));
     init_cache_context(&list);
@@ -152,20 +151,6 @@ void test_haihv(int argc, char* argv[]){
     newSession(sock, 6, sessions, SESSIONS);
     newSession(sock, 7, sessions, SESSIONS);
 
-    // updateSessionUser("0", users, sessions, SESSIONS);
-    // updateSessionUser("1", users + 1, sessions, SESSIONS);
-    // updateSessionUser("2", users + 2, sessions, SESSIONS);
-    // updateSessionUser("3", users + 3, sessions, SESSIONS);
-
-    // updateSessionState("0", NOT_AUTHENTICATED, sessions, SESSIONS);
-    // updateSessionState("1", AUTHENTICATED, sessions, SESSIONS);
-    // updateSessionState("2", USER_BLOCKED, sessions, SESSIONS);
-    // updateSessionState("3", NOT_IDENTIFIED_USER, sessions, SESSIONS);
-
-    // removeSession("0", sessions, SESSIONS);
-    // removeSession("1", sessions, SESSIONS);
-    // removeSession("2", sessions, SESSIONS);
-    // removeSession("3", sessions, SESSIONS);
 
     loginUser(4, "haihv", sessions, SESSIONS, users, USERS);
     loginUser(5, "admin", sessions, SESSIONS, users, USERS);
