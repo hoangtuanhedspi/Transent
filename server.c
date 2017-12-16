@@ -15,6 +15,7 @@
 
 #define BACKLOG 100  	 		/* Number of allowed connections */
 #define DATA_PATH "./db"
+#define SESSIONS 1000
 
 Session sessions[SESSIONS];
 Queue *req_queue = NULL;
@@ -67,7 +68,7 @@ int main(int argc, char *argv[]) {
 	polls[0].events = POLLIN;
 
 	/* Init sessions */
-	initSessions(sessions);
+	initSessions(sessions,SESSIONS);
 	
 	int revents;
 	loginfo("start poll");
@@ -90,7 +91,7 @@ int main(int argc, char *argv[]) {
 				}
 
 				/* Insert to sessions */
-				if (newSession(sessions,client, *connfd) == 0) {
+				if (newSession(client, *connfd,sessions,SESSIONS) == 0) {
 					printf("Error: Number of sessions is maximum!");
 					continue;
 				}else{
@@ -117,7 +118,7 @@ int main(int argc, char *argv[]) {
 void process(struct pollfd *po) {
 	loginfo("start %s",__func__);
 	int connfd = po->fd;
-	Session *ss = findSessionByConnfd(sessions,connfd);
+	Session *ss = findSessionByConnfd(connfd,sessions,SESSIONS);
 	struct sockaddr_in *client = ss->cliaddr;
 	int bytes_sent, bytes_received, bytes_output,payload_size;
 	char buff[BUFF_SIZE];
@@ -191,7 +192,7 @@ void closeConnection(struct pollfd *po, Session *ss) {
 	close(po->fd);
 
 	/* Remove from sessions */
-	if (removeSession(sessions,ss) == 0) {
+	if (removeSession(ss->id,sessions,SESSIONS) == 0) {
 		printf("Error: Can't remove session because don't exist session!\n");
 	}
 

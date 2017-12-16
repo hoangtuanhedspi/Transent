@@ -9,19 +9,18 @@ LIBS := ./bin/lib/libtransent.a
 SRCEXT := c
 SOURCES := $(shell find $(SRCDIR) -type f -name '*.$(SRCEXT)')
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
-CFLAGS :=  
-LIB := -L./bin/lib -ltransent #-lncurses
+CFLAGS := -w --std=c99
+LIB := -L./bin/lib -ltransent
 INC := -I./bin/include
 
 all: lib client server
 
 $(TARGET): transent.c
-	$(CC) $^ -o $(TARGET) $(LIB) $(INC)
+	$(CC) $(CFLAGS) $^ -o $(TARGET) $(LIB) $(INC)
 
 $(LIBS): $(OBJECTS)
 	if [ ! -d "$(SHAREDDIR)" ];then mkdir -p $(SHAREDDIR); fi;
-	if [ ! -d "$(SHAREDINC)" ];then mkdir -p $(SHAREDINC); fi;
-	cp -R include/*.h $(SHAREDINC)
+	if [ ! -d "$(SHAREDINC)" ];then mkdir -p $(SHAREDINC) && cp -R include/*.h $(SHAREDINC); fi;
 	ar rcs $@ $(OBJECTS)
 
 $(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT)

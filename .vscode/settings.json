@@ -11,7 +11,8 @@
         "inet.h": "c",
         "progressbar.h": "c",
         "statusbar.h": "c",
-        "directory.h": "c"
+        "directory.h": "c",
+        "types.h": "c"
     },
     "files.autoSave": "onFocusChange"
 }

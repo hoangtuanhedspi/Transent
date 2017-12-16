@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <poll.h>
 #include <assert.h>
-#include<string.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -16,11 +16,16 @@
 #include <transent/tsfmanage.h>
 #include <transent/slist.h>
 
+#define USERS 100
+#define SESSIONS 100
+#define USER_FILE "tests/user.txt"
+
 void test_interface(int argc, char* argv[]);
 void test_poll(int argc, char* argv[]);
 void test_directory(int argc, char* argv[]);
 void test_session(int argc, char* argv[]);
 void test_tsfmanage(int argc, char* argv[]);
+void test_haihv(int argc, char* argv[]);
 
 int main(int argc, char* argv[]){
     test_directory(argc,argv);
@@ -28,6 +33,7 @@ int main(int argc, char* argv[]){
     test_poll(argc,argv);
     test_session(argc,argv);
     test_tsfmanage(argc,argv);
+    test_haihv(argc, argv);
     return 0;
 }
 
@@ -80,15 +86,14 @@ void test_session(int argc, char* argv[]){
     myaddr.sin_family = AF_INET;
     myaddr.sin_port = htons(3490);
     inet_aton("63.161.169.137", &myaddr.sin_addr.s_addr);
-    printf("pass!\n");
     Session sessions[SESSIONS];
-    initSessions(sessions);
-    newSession(sessions,&myaddr,1);
+    initSessions(sessions,SESSIONS);
+    newSession(&myaddr, 4, sessions, SESSIONS);
     printf("pass!\n");
     Session* copy = copy_session(sessions);
     sessions[0].connfd = 2;
     inet_aton("63.161.169.126", &myaddr.sin_addr.s_addr);
-    assert(copy->connfd == 1);
+    assert(copy->connfd == 4);
     printf("Copy client: %s sockfd:%d\n",inet_ntoa(copy->cliaddr->sin_addr),copy->connfd);
     Session* clone = tsalloc(Session,1);
     clone_session(clone,sessions);
@@ -129,4 +134,58 @@ void test_tsfmanage(int argc, char* argv[]){
     
     drop_request(&queue,make_request(NULL,"abc"));
     printf("Queue size:%d\n",length(queue));
+}
+
+void test_haihv(int argc, char* argv[]){
+    printf("==============TEST HAIHV===============\n");
+    User users[USERS];
+    Session sessions[SESSIONS];
+    initSessions(sessions, SESSIONS);
+
+
+    readUsers(USER_FILE, users, USERS);
+    printUsers(users, USERS);
+    
+    struct sockaddr_in *sock = (struct sockaddr_in *) malloc(sizeof(struct sockaddr_in));
+    newSession(sock, 4, sessions, SESSIONS);
+    newSession(sock, 5, sessions, SESSIONS);
+    newSession(sock, 6, sessions, SESSIONS);
+    newSession(sock, 7, sessions, SESSIONS);
+
+    // updateSessionUser("0", users, sessions, SESSIONS);
+    // updateSessionUser("1", users + 1, sessions, SESSIONS);
+    // updateSessionUser("2", users + 2, sessions, SESSIONS);
+    // updateSessionUser("3", users + 3, sessions, SESSIONS);
+
+    // updateSessionState("0", NOT_AUTHENTICATED, sessions, SESSIONS);
+    // updateSessionState("1", AUTHENTICATED, sessions, SESSIONS);
+    // updateSessionState("2", USER_BLOCKED, sessions, SESSIONS);
+    // updateSessionState("3", NOT_IDENTIFIED_USER, sessions, SESSIONS);
+
+    // removeSession("0", sessions, SESSIONS);
+    // removeSession("1", sessions, SESSIONS);
+    // removeSession("2", sessions, SESSIONS);
+    // removeSession("3", sessions, SESSIONS);
+
+    loginUser(4, "haihv", sessions, SESSIONS, users, USERS);
+    loginUser(5, "admin", sessions, SESSIONS, users, USERS);
+    loginUser(6, "notfound", sessions, SESSIONS, users, USERS);
+    loginUser(7, "block", sessions, SESSIONS, users, USERS);
+
+    loginPass(4, "wrong", sessions, SESSIONS, users, USERS);
+    loginPass(4, "wrong", sessions, SESSIONS, users, USERS);
+    loginPass(4, "wrong", sessions, SESSIONS, users, USERS);
+    loginPass(4, "wrong", sessions, SESSIONS, users, USERS);
+    // loginPass(4, "haihv", sessions, SESSIONS, users, USERS);
+    loginPass(5, "admin", sessions, SESSIONS, users, USERS);
+    loginPass(6, "notfound", sessions, SESSIONS, users, USERS);
+    loginPass(7, "block", sessions, SESSIONS, users, USERS);
+
+    logout(4, "haihv", "wrong", sessions, SESSIONS, users, USERS);
+    logout(5, "admin", "admin", sessions, SESSIONS, users, USERS);
+    logout(6, "notfound", "notfound", sessions, SESSIONS, users, USERS);
+    logout(7, "block", "block", sessions, SESSIONS, users, USERS);
+    printf("Size:%d\n",session_size());
+
+    printSessions(sessions, SESSIONS);
 }
