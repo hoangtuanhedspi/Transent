@@ -36,7 +36,9 @@ int indexOfSession (char *sessionId, Session sessions[], int max_sessions);
 int indexOfEmptySession (Session sessions[], int max_sessions);
 void initSessions (Session sessions[], int max_sessions);
 char *hashId ();
-
+int clone_session(des,res);
+Session* copy_session(Session* session);
+int session_size();
 void printSessions ();
 
 // _Bool isEqualSockAddrIn (struct sockaddr_in *addr1, struct sockaddr_in *addr2);

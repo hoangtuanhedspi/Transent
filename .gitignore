@@ -5,3 +5,4 @@ client
 server
 *.o
 .DS_Store
+db

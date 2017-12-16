@@ -3,17 +3,23 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <strings.h>
+#include <string.h>
 #include <ctype.h>
 
+#define DEBUG 1
+#include <transent/util.h>
 #include <transent/session.h>
 #include <transent/mypoll.h>
+#include <transent/interface.h>
+#include <transent/tsfmanage.h>
 
 #define BACKLOG 100  	 		/* Number of allowed connections */
-#define BUFF_SIZE 2048
+#define DATA_PATH "./db"
+#define SESSIONS 1000
 
 Session sessions[SESSIONS];
-
+Queue *req_queue = NULL;
+CacheList* cache_list = NULL;
 /* Process command from client end return */
 void process(struct pollfd *po);
 
@@ -27,11 +33,11 @@ int main(int argc, char *argv[]) {
 	int port = 0;
 	// checking arguments
 	validArguments(argc, argv, &port);
-
+	init_cache_context(&cache_list);
 	int listenfd, *connfd;
 	struct sockaddr_in server; 		/* server's address information */
 	struct sockaddr_in *client; 	/* client's address information */
-	int sin_size;
+	socklen_t sin_size;
 
 	if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) == -1 ){  /* calls socket() */
 		perror("\nError: ");
@@ -62,12 +68,12 @@ int main(int argc, char *argv[]) {
 	polls[0].events = POLLIN;
 
 	/* Init sessions */
-	initSessions();
+	initSessions(sessions,SESSIONS);
 	
 	int revents;
-	
+	loginfo("start poll");
 	while(1){
-		revents = poll(polls, POLLS, 100000);		/* Timeout = 10s */
+		revents = poll(polls, POLLS, 10000);		/* Timeout = 10s */
 		if (revents > 0) {
 			/* Process new connection */
 			if (polls[0].revents & POLLIN) {
@@ -76,7 +82,7 @@ int main(int argc, char *argv[]) {
 				
 				if ((*connfd = accept(listenfd, (struct sockaddr *)client, &sin_size)) ==- 1)
 					perror("\nError: ");
-
+				loginfo("Accept socket[%d]",client->sin_port);
 				/* Insert to polls */
 				if (addPoll(*connfd, POLLIN) == 0) {
 					/* polls is full -> close connection */
@@ -85,17 +91,19 @@ int main(int argc, char *argv[]) {
 				}
 
 				/* Insert to sessions */
-				if (newSession(client, *connfd) == 0) {
+				if (newSession(client, *connfd,sessions,SESSIONS) == 0) {
 					printf("Error: Number of sessions is maximum!");
 					continue;
+				}else{
+					loginfo("New session added!");
 				}
+
 				printf("You got a connection from %s\n", inet_ntoa(client->sin_addr)); /* prints client's IP */
 			}
 
 			/* Process transfer */
 			for (int i = 1; i < POLLS; i++) {
 				if (polls[i].fd == -1) continue;
-
 				if (polls[i].revents & POLLIN) {
 					process(polls + i);
 				}
@@ -108,14 +116,16 @@ int main(int argc, char *argv[]) {
 }
 
 void process(struct pollfd *po) {
+	loginfo("start %s",__func__);
 	int connfd = po->fd;
-	Session *ss = findSessionByConnfd(connfd);
+	Session *ss = findSessionByConnfd(connfd,sessions,SESSIONS);
 	struct sockaddr_in *client = ss->cliaddr;
-	int bytes_sent, bytes_received, bytes_output;
-	char recv_data[BUFF_SIZE];
-	char sent_data[BUFF_SIZE];
-
-	bytes_received = recv(connfd, recv_data, BUFF_SIZE - 1, 0); // blocking
+	int bytes_sent, bytes_received, bytes_output,payload_size;
+	char buff[BUFF_SIZE];
+	char payload[PAY_LEN];
+	bzero(buff,BUFF_SIZE);
+	bytes_received = recv(connfd, buff, BUFF_SIZE - 1, 0); // blocking
+	int req_method = UNDEFINE;
 	if (bytes_received < 0) {
 		perror("\nError: ");
 		closeConnection(po, ss);
@@ -123,21 +133,50 @@ void process(struct pollfd *po) {
 		printf("Connection closed.\n");
 		closeConnection(po, ss);
 	} else {
-		recv_data[bytes_received] = '\0';
-		printf("\nReceive: |%s|\n", recv_data);
-
+		req_method = parse_packet(buff,payload,&payload_size);
+		loginfo("Info:%d|%s\n",req_method,payload);
+		if(req_method==RQ_FILE){
+			int i = 0;
+			if(session_size()>1){
+				Request* request = make_request(ss,payload);
+				wrap_packet(buff,payload,payload_size,RQ_FILE);
+				enqueue(&req_queue,request);
+				printf("Queue size:%d\n",length(req_queue));
+				for (i = 0; i < SESSIONS; i++) {
+					if (sessions[i].connfd != -1 && !isSameSession(sessions + i, ss)) {
+						bytes_sent = get_real_len(buff);
+						bytes_sent = send(sessions[i].connfd,buff, bytes_sent, 0);
+						if (bytes_sent < 0)
+							perror("\nError: ");
+						loginfo("Response:%dbyte\n",bytes_sent);
+					}
+				}
+			}
+			else{
+				bytes_sent = wrap_packet(buff,"Have nomore than this client!",29,NOTI_INF);
+				bytes_sent = send(ss->connfd,buff, bytes_sent, 0);
+				if (bytes_sent < 0)
+					perror("\nError: ");
+			}
+		}else if(req_method==RP_FOUND){
+			loginfo("Founded!");
+			Cache* cache = new_cache(payload,payload);
+			if(!cache_contain(cache_list,cache))
+				push_cache(cache_list,cache);
+			loginfo("pass cache contain!");
+			printf("Cache size:%d\n",get_all_cache_size());
+		}else if(req_method == RP_NFOUND){
+			loginfo("File not found!");
+			Request* request = make_request(ss,payload);
+			drop_request(&req_queue,request);
+			printf("Queue size:%d\n",length(req_queue));
+		}
 		/* Print list of client has file */
 
 		/* Send for all other client */
 		
 		// Using pthread???
-		for (int i = 0; i < SESSIONS; i++) {
-			if (sessions[i].connfd != -1 && !isSameSession(sessions + i, ss)) {
-				bytes_sent = send(sessions[i].connfd, recv_data, bytes_received, 0);
-				if (bytes_sent < 0)
-					perror("\nError: ");
-			}
-		}
+		
 		
 		/* Recv from all other client */
 		// for (int i = 0; i < SESSIONS; i++) {
@@ -148,12 +187,12 @@ void process(struct pollfd *po) {
 	}
 }
 
-void closeConnection (struct pollfd *po, Session *ss) {
+void closeConnection(struct pollfd *po, Session *ss) {
 	/* Close connection */
 	close(po->fd);
 
 	/* Remove from sessions */
-	if (removeSession(ss) == 0) {
+	if (removeSession(ss->id,sessions,SESSIONS) == 0) {
 		printf("Error: Can't remove session because don't exist session!\n");
 	}
 

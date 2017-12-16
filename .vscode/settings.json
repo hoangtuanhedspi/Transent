@@ -1,0 +1,18 @@
+{
+    "files.associations": {
+        "util.h": "c",
+        "interface.h": "c",
+        "tsfmanage.h": "c",
+        "session.h": "c",
+        "slist.h": "c",
+        "socket.h": "c",
+        "stdlib.h": "c",
+        "e4c.h": "c",
+        "inet.h": "c",
+        "progressbar.h": "c",
+        "statusbar.h": "c",
+        "directory.h": "c",
+        "types.h": "c"
+    },
+    "files.autoSave": "onFocusChange"
+}
