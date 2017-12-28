@@ -2,6 +2,7 @@
 #include "../include/session.h"
 
 #define tsalloc(type,size) (type*)malloc(size*sizeof(type))
+
 static int size = 0;
 _Bool updateSessionState (char *sessionId, enum SessionState state, Session sessions[], int max_sessions) {
     int target = indexOfSession(sessionId, sessions, max_sessions);
@@ -59,15 +60,20 @@ _Bool removeSession (char *sessionId, Session sessions[], int max_sessions) {
     sessions[target].id[0] = '\0';
     sessions[target].cliaddr = NULL;
     sessions[target].connfd = -1;
+
     size--;
+
     return 1;
 }
 
 Session* copy_session(Session* session){
-    Session *copy = tsalloc(Session,1);
+    Session *copy = tsalloc(Session, 1);
+
     if(!copy) return NULL;
-    if(clone_session(copy,session)==-1)
+
+    if(clone_session(copy,session) == -1)
         return NULL;
+        
     return copy;
 }
 
@@ -124,7 +130,9 @@ _Bool newSession (struct sockaddr_in *cliaddr, int connfd, Session sessions[], i
     sessions[emptySession].cliaddr = cliaddr;
     sessions[emptySession].connfd = connfd;
     sessions[emptySession].no_login_fail = 0;
+
     size++;
+
     return 1;
 }
 
