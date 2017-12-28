@@ -35,6 +35,7 @@ Session *findSessionByConnfd (int connfd, Session sessions[], int max_sessions);
 int indexOfSession (char *sessionId, Session sessions[], int max_sessions);
 int indexOfEmptySession (Session sessions[], int max_sessions);
 void initSessions (Session sessions[], int max_sessions);
+int isSameSession(Session* des, Session* res);
 char *hashId ();
 int clone_session(des,res);
 Session* copy_session(Session* session);

@@ -4,7 +4,6 @@
 #define tsalloc(type,size) (type*)malloc(size*sizeof(type))
 
 static int size = 0;
-
 _Bool updateSessionState (char *sessionId, enum SessionState state, Session sessions[], int max_sessions) {
     int target = indexOfSession(sessionId, sessions, max_sessions);
     if (target == -1) {     // Not found session
@@ -189,6 +188,12 @@ void printSessions (Session sessions[], int max_sessions) {
         }
     }
 }
+
+int isSameSession(Session* des, Session* res){
+    if(!des || !res) return 0;
+    return strcmp(des->id, res->id) == 0;
+}
+
 
 int session_size(){
     return size;

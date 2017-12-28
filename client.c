@@ -122,8 +122,6 @@ int main(int argc, char *argv[]) {
 					printf("Server noti:%s\n",payload);
 				}
 			}
-		}else if(revents == 0){
-			printf("Timeout!\n");
 		}
 	}
 	end_process:
