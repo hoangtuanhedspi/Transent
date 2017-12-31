@@ -15,6 +15,7 @@
 #include <transent/session.h>
 #include <transent/tsfmanage.h>
 #include <transent/slist.h>
+#include <transent/command.h>
 
 #define USERS 100
 #define SESSIONS 100
@@ -26,6 +27,7 @@ void test_directory(int argc, char* argv[]);
 void test_session(int argc, char* argv[]);
 void test_tsfmanage(int argc, char* argv[]);
 void test_haihv(int argc, char* argv[]);
+void test_command(int argc, char* argv[]);
 
 int main(int argc, char* argv[]){
     test_directory(argc,argv);
@@ -34,6 +36,7 @@ int main(int argc, char* argv[]){
     test_session(argc,argv);
     test_tsfmanage(argc,argv);
     test_haihv(argc,argv);
+    test_command(argc,argv);
     return 0;
 }
 
@@ -173,4 +176,14 @@ void test_haihv(int argc, char* argv[]){
     printf("Size:%d\n",session_size());
 
     printSessions(sessions, SESSIONS);
+}
+
+void test_command(int argc, char* argv[]){
+    printf("============Test command==============\n");
+    char* command = "LOGIN        hoangtuan *";
+    char* cmdpass = "PASS        124567&\%aHS";
+    Command* cmd = parse_cmd(command);
+    Command* cmdpwd = parse_cmd(cmdpass);
+    printf("Command:%s\nmethod:%s\ndata:%s\n",cmd->str_cmd,cmd->method,cmd->data);
+    printf("Command:%s\nmethod:%s\ndata:%s\n",cmdpwd->str_cmd,cmdpwd->method,cmdpwd->data);
 }
