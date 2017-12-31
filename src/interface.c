@@ -24,8 +24,15 @@
 #include "../include/interface.h"
 #include "../include/util.h"
 
-int pack(int at);
+struct {
+    Method method;
+    char string[CMETHOD_LEN + 1];
+} c_method[2] = {
+  {LOGIN,"LOGIN"},
+  {LOGOUT,"LOGOUT"}
+};
 
+int pack(int at);
 void* add_request(char* buff,int method){
     bzero(buff,HEADER_LEN);
     return memcpy(buff+pack(PACK_METHOD),&method,PACK_SIZE);
@@ -84,4 +91,18 @@ int valid_method(int method){
         default: return UNDEFINE;
     }
     return UNDEFINE;
+}
+
+int stom(char* string_method){
+
+    for(int i = 0;i<METHOD_COUNT;i++){
+        if(strcmp(c_method[i].string, string_method)==0)
+            return c_method[i].method;
+    }
+    
+    return UNDEFINE;
+}
+
+int mtos(Method method){
+    return c_method[method].method;
 }
