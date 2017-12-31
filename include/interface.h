@@ -59,6 +59,14 @@
 #define EOF_FILE    0
 //Stick data stream continue transfer
 #define FSTREAM     1
+//Length of strig method
+#define CMETHOD_LEN 10
+#define METHOD_COUNT 2
+//ennumeric user request method
+typedef enum __method{
+    LOGIN,
+    LOGOUT
+}Method;
 
 /**
  * Identify the packet position in buffer stream.
@@ -81,9 +89,6 @@ int detach_payload2(char* buff,char* payload);
 int get_payload_size(char* buff);
 int valid_method(int method);
 int get_real_len(char* buff);
-/*
-add_request(buff,LOGIN);
-attach_payload(buff,"user:pass",10);
-
-*/
+int stom(char* string_method);
+int mtos(Method method);
 #endif

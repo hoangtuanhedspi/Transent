@@ -51,15 +51,15 @@ void test_interface(int argc, char* argv[]){
     printf("==============TEST INTERFACE===============\n");
     add_request(buff,RQ_FILE);
     int i = extract_request(buff);
-    attach_payload(buff,"Hello",3);
+    attach_payload(buff,"Hello",5);
     char* pl = detach_payload(buff);
     int j = 0;
     for(j = 0;j<10;j++){
         printf("decode:%d\n",buff[j]);
     }
-    loginfo("\nPackage contain %d byte\nmethod:%dpayload:%s\npayload_size:%dbyte\n",get_real_len(buff),i,pl,get_payload_size(buff));
+    loginfo("\nPackage contain %d byte\nmethod:%d\npayload:%s\npayload_size:%dbyte\n",get_real_len(buff),i,pl,get_payload_size(buff));
     assert(i==1);
-    assert(strcmp(pl,"Hel")==0);
+    assert(strcmp(pl,"Hello")==0);
 }
 
 void test_poll(int argc, char* argv[]){
@@ -180,10 +180,11 @@ void test_haihv(int argc, char* argv[]){
 
 void test_command(int argc, char* argv[]){
     printf("============Test command==============\n");
-    char* command = "LOGIN        hoangtuan *";
+    char* command = "logIn        hoangtuan *";
     char* cmdpass = "PASS        124567&\%aHS";
     Command* cmd = parse_cmd(command);
     Command* cmdpwd = parse_cmd(cmdpass);
     printf("Command:%s\nmethod:%s\ndata:%s\n",cmd->str_cmd,cmd->method,cmd->data);
-    printf("Command:%s\nmethod:%s\ndata:%s\n",cmdpwd->str_cmd,cmdpwd->method,cmdpwd->data);
+    if(valid_cmd(*cmdpwd))
+        printf("Command:%s\nmethod:%s\ndata:%s\n",cmdpwd->str_cmd,cmdpwd->method,cmdpwd->data);
 }

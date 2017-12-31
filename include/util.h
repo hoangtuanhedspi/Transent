@@ -51,13 +51,6 @@
 #define ADDERR "Error: Invalid address argument!\n"
 #define tsalloc(type,size) (type*)malloc(size*sizeof(type))
 
-typedef enum _action{
-    UNKNOWN,
-    SENDFILE,
-    LOGIN,
-    LOGOUT
-}MenuAction;
-
 typedef struct _request{
     Session *session;
     char* file_name;
@@ -65,10 +58,8 @@ typedef struct _request{
 
 typedef Node Queue;
 
-MenuAction get_user_method(int logedin);
-MenuAction valid_action(MenuAction action);
-int parse_packet(char* buff,char* payload,int* size);
-int wrap_packet(char* buff,char* payload,int size,int method);
+extern int parse_packet(char* buff,char* payload,int* size);
+extern int wrap_packet(char* buff,char* payload,int size,int method);
 extern Request* enqueue(Queue** queue,Request * request);
 extern Request* dequeue(Queue** queue);
 extern Request* new_request_object(Session* session, char * file_name);
