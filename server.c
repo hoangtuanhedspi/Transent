@@ -134,6 +134,45 @@ void process(struct pollfd *po) {
 		closeConnection(po, ss);
 	} else {
 		req_method = parse_packet(buff,payload,&payload_size);
+
+	}
+}
+
+void closeConnection(struct pollfd *po, Session *ss) {
+	/* Close connection */
+	close(po->fd);
+
+	/* Remove from sessions */
+	if (removeSession(ss->id,sessions,SESSIONS) == 0) {
+		printf("Error: Can't remove session because don't exist session!\n");
+	}
+
+	/* Remove from polls */
+	if (removePoll(po) == 0) {
+		printf("Error: Can't remove poll because don't exist poll!\n");
+	}
+}
+
+void validArguments (int argc, char *argv[], int *port) {
+	if (argc > 1) {
+		// Check valid port
+		int i;
+		char *port_str = argv[1];
+		for (i = 0; port_str[i] != '\0'; i++) {
+			if (!isdigit(port_str[i])) {
+				printf("Port is invalid\n");
+				exit(EXIT_FAILURE);
+			}
+		}
+		if (port_str[i] == '\0') *port = atoi(port_str);
+	} else {
+		printf("(ERROR) To few arguments!\n");
+		exit(EXIT_FAILURE);
+	}
+}
+
+
+/* Old process
 		loginfo("Info:%d|%s\n",req_method,payload);
 		if(req_method==RQ_FILE){
 			int i = 0;
@@ -184,38 +223,3 @@ void process(struct pollfd *po) {
 
 		// 	}
 		// }
-	}
-}
-
-void closeConnection(struct pollfd *po, Session *ss) {
-	/* Close connection */
-	close(po->fd);
-
-	/* Remove from sessions */
-	if (removeSession(ss->id,sessions,SESSIONS) == 0) {
-		printf("Error: Can't remove session because don't exist session!\n");
-	}
-
-	/* Remove from polls */
-	if (removePoll(po) == 0) {
-		printf("Error: Can't remove poll because don't exist poll!\n");
-	}
-}
-
-void validArguments (int argc, char *argv[], int *port) {
-	if (argc > 1) {
-		// Check valid port
-		int i;
-		char *port_str = argv[1];
-		for (i = 0; port_str[i] != '\0'; i++) {
-			if (!isdigit(port_str[i])) {
-				printf("Port is invalid\n");
-				exit(EXIT_FAILURE);
-			}
-		}
-		if (port_str[i] == '\0') *port = atoi(port_str);
-	} else {
-		printf("(ERROR) To few arguments!\n");
-		exit(EXIT_FAILURE);
-	}
-}
