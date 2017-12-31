@@ -27,9 +27,11 @@
 struct {
     Method method;
     char string[CMETHOD_LEN + 1];
-} c_method[2] = {
-  {LOGIN,"LOGIN"},
-  {LOGOUT,"LOGOUT"}
+} c_method[METHOD_COUNT] = {
+    {STUP,"So stupid"},
+    {LOGIN,"LOGIN"},
+    {LOGOUT,"LOGOUT"},
+    {FIND,"FIND"}
 };
 
 int pack(int at);
@@ -94,12 +96,10 @@ int valid_method(int method){
 }
 
 int stom(char* string_method){
-
     for(int i = 0;i<METHOD_COUNT;i++){
         if(strcmp(c_method[i].string, string_method)==0)
             return c_method[i].method;
     }
-    
     return UNDEFINE;
 }
 

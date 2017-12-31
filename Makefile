@@ -10,7 +10,7 @@ SRCEXT := c
 SOURCES := $(shell find $(SRCDIR) -type f -name '*.$(SRCEXT)')
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
 CFLAGS := -w --std=c99
-LIB := -L./bin/lib -ltransent
+LIB := -L./bin/lib -ltransent -lpthread
 INC := -I./bin/include
 
 all: lib client server

@@ -61,11 +61,13 @@
 #define FSTREAM     1
 //Length of strig method
 #define CMETHOD_LEN 10
-#define METHOD_COUNT 2
+#define METHOD_COUNT 4
 //ennumeric user request method
 typedef enum __method{
+    STUP,
     LOGIN,
-    LOGOUT
+    LOGOUT,
+    FIND
 }Method;
 
 /**

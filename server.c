@@ -71,37 +71,29 @@ int main(int argc, char *argv[]) {
 	initSessions(sessions,SESSIONS);
 	
 	int revents;
-	loginfo("start poll");
 	while(1){
 		revents = poll(polls, POLLS, 10000);		/* Timeout = 10s */
 		if (revents > 0) {
-			/* Process new connection */
 			if (polls[0].revents & POLLIN) {
 				connfd = (int*) malloc(sizeof(int));
 				client = (struct sockaddr_in *) malloc(sin_size);
 				
 				if ((*connfd = accept(listenfd, (struct sockaddr *)client, &sin_size)) ==- 1)
 					perror("\nError: ");
-				loginfo("Accept socket[%d]",client->sin_port);
-				/* Insert to polls */
+
 				if (addPoll(*connfd, POLLIN) == 0) {
-					/* polls is full -> close connection */
 					close(*connfd);
 					continue;
 				}
 
-				/* Insert to sessions */
 				if (newSession(client, *connfd,sessions,SESSIONS) == 0) {
 					printf("Error: Number of sessions is maximum!");
 					continue;
 				}else{
 					loginfo("New session added!");
 				}
-
 				printf("You got a connection from %s\n", inet_ntoa(client->sin_addr)); /* prints client's IP */
 			}
-
-			/* Process transfer */
 			for (int i = 1; i < POLLS; i++) {
 				if (polls[i].fd == -1) continue;
 				if (polls[i].revents & POLLIN) {
@@ -116,7 +108,6 @@ int main(int argc, char *argv[]) {
 }
 
 void process(struct pollfd *po) {
-	loginfo("start %s",__func__);
 	int connfd = po->fd;
 	Session *ss = findSessionByConnfd(connfd,sessions,SESSIONS);
 	struct sockaddr_in *client = ss->cliaddr;
@@ -134,20 +125,17 @@ void process(struct pollfd *po) {
 		closeConnection(po, ss);
 	} else {
 		req_method = parse_packet(buff,payload,&payload_size);
-
+		if(req_method = RQ_FILE){
+			loginfo("Request file:%s\n",payload);
+		}
 	}
 }
 
 void closeConnection(struct pollfd *po, Session *ss) {
-	/* Close connection */
 	close(po->fd);
-
-	/* Remove from sessions */
 	if (removeSession(ss->id,sessions,SESSIONS) == 0) {
 		printf("Error: Can't remove session because don't exist session!\n");
 	}
-
-	/* Remove from polls */
 	if (removePoll(po) == 0) {
 		printf("Error: Can't remove poll because don't exist poll!\n");
 	}
@@ -155,7 +143,6 @@ void closeConnection(struct pollfd *po, Session *ss) {
 
 void validArguments (int argc, char *argv[], int *port) {
 	if (argc > 1) {
-		// Check valid port
 		int i;
 		char *port_str = argv[1];
 		for (i = 0; port_str[i] != '\0'; i++) {
