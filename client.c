@@ -19,7 +19,8 @@
 
 /* Check arguments is valid or not. If valid ip -> *serv_ip, port -> &serv_port */
 void validArguments (int argc, char *argv[], char *serv_ip, int *serv_port);
-
+int local_interac(struct pollfd poll, char* buff, char* payload, int sockfd);
+int server_interac(struct pollfd poll, char* buff, char* payload, int sockfd);
 /* Check wanna exit */
 _Bool wannaExit (char *buff);
 
@@ -59,10 +60,10 @@ int main(int argc, char *argv[]) {
 		revents = poll(polls, POLLS, 20000);
 		if (revents > 0) {
 			if (polls[0].revents & POLLIN)
-				local_interac(poll[0])
+				local_interac(polls[0],buff,payload,client_sock);
 
 			if (polls[1].revents & POLLIN)
-				server_interac(poll[1])
+				server_interac(polls[1],buff,payload,client_sock);
 		}
 	}
 	end_process:
@@ -77,7 +78,6 @@ _Bool wannaExit(char *buff) {
 
 void validArguments (int argc, char *argv[], char *serv_ip, int *serv_port) {
 	if (argc > 2) {
-		/* Check valid ip address */
 		struct sockaddr_in tmp_addr;
 		if (inet_pton(AF_INET, argv[1], &(tmp_addr.sin_addr)) == 0) {
 			printf(ADDERR);
@@ -103,8 +103,11 @@ void validArguments (int argc, char *argv[], char *serv_ip, int *serv_port) {
 }
 
 
-int local_interac(struct pollfd poll,char* buff, char* payload,int sockfd){
-	int 	method = UNDEFINE;
+int local_interac(struct pollfd poll, char* buff, char* payload, int sockfd){
+	int method  	= UNDEFINE,
+		bytes_sent 	= 0,
+		msg_len 	= 0;
+
 	fprintf(stderr,"Enter command:");
 	bzero(payload,PAY_LEN);
 	add_request(buff,RQ_FILE);
@@ -114,32 +117,35 @@ int local_interac(struct pollfd poll,char* buff, char* payload,int sockfd){
 	loginfo("Payload:%s|len:%d|req:%d\n",detach_payload(buff),
 										get_payload_size(buff),
 										extract_request(buff));
-
 	if (wannaExit(payload)){
 		printf("\n");
 		return 0;
 	}
 
 	msg_len = get_real_len(buff);
-	bytes_sent = send(client_sock, buff, msg_len, 0);
+	bytes_sent = send(sockfd, buff, msg_len, 0);
 	if(bytes_sent <= 0){
 		printf("\nConnection closed!\n");
-		break;
+		return 0;
 	}
+	
 	loginfo("Send:%dbyte\n",get_real_len(buff));
-	return 0;
+	return 1;
 }
 
 int server_interac(struct pollfd poll,char* buff, char* payload,int sockfd){
-	int req_response = UNDEFINE;
+	int req_response   = UNDEFINE,
+		msg_len 	   = 0, 
+		bytes_transfer = 0;
+
 	bzero(buff,BUFF_SIZE);
-	bytes_received = recv(client_sock, buff, BUFF_SIZE-1, 0);
-	if(bytes_received <= 0){
+	bytes_transfer = recv(sockfd, buff, BUFF_SIZE-1, 0);
+	if(bytes_transfer <= 0){
 		printf("\nError!Cannot receive data from sever!\n");
-		break;
+		return 0;
 	}
 
-	req_response = parse_packet(buff,payload,&bytes_received);
+	req_response = parse_packet(buff,payload,&bytes_transfer);
 
 	if(req_response == RQ_FILE){
 		char* filename = detach_payload(buff);
@@ -148,11 +154,11 @@ int server_interac(struct pollfd poll,char* buff, char* payload,int sockfd){
 			add_request(buff,RP_FOUND);
 			attach_payload(buff,filename,0);
 			msg_len = get_real_len(buff);
-			msg_len = send(client_sock, buff, msg_len, 0);
+			msg_len = send(sockfd, buff, msg_len, 0);
 			loginfo("Founded!\n");
 		}else{
 			add_request(buff,RP_NFOUND);
-			msg_len = send(client_sock, buff, msg_len, 0);
+			msg_len = send(sockfd, buff, msg_len, 0);
 			loginfo("Not found:%s\n",buff+HEADER_LEN);
 		}
 		free(filename);
