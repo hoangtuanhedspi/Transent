@@ -13,6 +13,7 @@
 #define DEBUG 1
 #include <transent/util.h>
 #include <transent/interface.h>
+#include <transent/command.h>
 #include <transent/tsfmanage.h>
 #define POLLS 2
 #define DATA_PATH "./db"
@@ -55,7 +56,6 @@ int main(int argc, char *argv[]) {
 	}
 
 	fprintf(stderr,"Enter command:");
-	scanf("Enter command:");
 	while(1){
 		revents = poll(polls, POLLS, 20000);
 		if (revents > 0) {
@@ -104,67 +104,76 @@ void validArguments (int argc, char *argv[], char *serv_ip, int *serv_port) {
 
 
 int local_interac(struct pollfd poll, char* buff, char* payload, int sockfd){
-	int method  	= UNDEFINE,
-		bytes_sent 	= 0,
+	Method method = STUP;
+	Command* cmd = NULL;
+	int	bytes_sent 	= 0,
 		msg_len 	= 0;
 
-	fprintf(stderr,"Enter command:");
+	printf("Enter command:");
 	bzero(payload,PAY_LEN);
-	add_request(buff,RQ_FILE);
 	scanf("%[^\n]",payload);
 	while(getchar()!='\n');
-	attach_payload(buff,payload,strlen(payload));
-	loginfo("Payload:%s|len:%d|req:%d\n",detach_payload(buff),
-										get_payload_size(buff),
-										extract_request(buff));
-	if (wannaExit(payload)){
-		printf("\n");
-		return 0;
-	}
+	cmd = parse_cmd(payload);
+	method = valid_cmd(*cmd);
 
-	msg_len = get_real_len(buff);
-	bytes_sent = send(sockfd, buff, msg_len, 0);
-	if(bytes_sent <= 0){
-		printf("\nConnection closed!\n");
-		return 0;
+	if(method == UNDEFINE){
+		exit(1);
 	}
 	
-	loginfo("Send:%dbyte\n",get_real_len(buff));
+	// while(getchar()!='\n');
+	// attach_payload(buff,payload,strlen(payload));
+	// loginfo("Payload:%s|len:%d|req:%d\n",detach_payload(buff),
+	// 									get_payload_size(buff),
+	// 									extract_request(buff));
+	// if (wannaExit(payload)){
+	// 	printf("\n");
+	// 	return 0;
+	// }
+
+	// msg_len = get_real_len(buff);
+	// bytes_sent = send(sockfd, buff, msg_len, 0);
+	// if(bytes_sent <= 0){
+	// 	printf("\nConnection closed!\n");
+	// 	return 0;
+	// }
+	
+	// loginfo("Send:%dbyte\n",get_real_len(buff));
 	return 1;
 }
 
 int server_interac(struct pollfd poll,char* buff, char* payload,int sockfd){
-	int req_response   = UNDEFINE,
-		msg_len 	   = 0, 
-		bytes_transfer = 0;
+	// int req_response   = UNDEFINE,
+	// 	msg_len 	   = 0, 
+	// 	bytes_transfer = 0;
 
-	bzero(buff,BUFF_SIZE);
-	bytes_transfer = recv(sockfd, buff, BUFF_SIZE-1, 0);
-	if(bytes_transfer <= 0){
-		printf("\nError!Cannot receive data from sever!\n");
-		return 0;
-	}
+	// bzero(buff,BUFF_SIZE);
+	// bytes_transfer = recv(sockfd, buff, BUFF_SIZE-1, 0);
+	// if(bytes_transfer <= 0){
+	// 	printf("\nError!Cannot receive data from sever!\n");
+	// 	return 0;
+	// }
 
-	req_response = parse_packet(buff,payload,&bytes_transfer);
+	// req_response = parse_packet(buff,payload,&bytes_transfer);
 
-	if(req_response == RQ_FILE){
-		char* filename = detach_payload(buff);
-		loginfo("filename:%s\n",filename);
-		if(existFile(DATA_PATH,filename)){
-			add_request(buff,RP_FOUND);
-			attach_payload(buff,filename,0);
-			msg_len = get_real_len(buff);
-			msg_len = send(sockfd, buff, msg_len, 0);
-			loginfo("Founded!\n");
-		}else{
-			add_request(buff,RP_NFOUND);
-			msg_len = send(sockfd, buff, msg_len, 0);
-			loginfo("Not found:%s\n",buff+HEADER_LEN);
-		}
-		free(filename);
-	}else if(req_response == RP_FLIST){
+	// if(req_response == RQ_FILE){
+	// 	char* filename = detach_payload(buff);
+	// 	loginfo("filename:%s\n",filename);
+	// 	if(existFile(DATA_PATH,filename)){
+	// 		add_request(buff,RP_FOUND);
+	// 		attach_payload(buff,filename,0);
+	// 		msg_len = get_real_len(buff);
+	// 		msg_len = send(sockfd, buff, msg_len, 0);
+	// 		loginfo("Founded!\n");
+	// 	}else{
+	// 		add_request(buff,RP_NFOUND);
+	// 		msg_len = send(sockfd, buff, msg_len, 0);
+	// 		loginfo("Not found:%s\n",buff+HEADER_LEN);
+	// 	}
+	// 	free(filename);
+	// }else if(req_response == RP_FLIST){
 		
-	}else if(req_response == NOTI_INF){
-		printf("Server noti:%s\n",payload);
-	}
+	// }else if(req_response == NOTI_INF){
+	// 	printf("Server noti:%s\n",payload);
+	// }
+	return 0;
 }

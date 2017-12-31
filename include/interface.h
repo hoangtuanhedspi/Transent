@@ -64,6 +64,7 @@
 #define METHOD_COUNT 2
 //ennumeric user request method
 typedef enum __method{
+    STUP,
     LOGIN,
     LOGOUT
 }Method;

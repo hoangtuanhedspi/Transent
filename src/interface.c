@@ -28,8 +28,9 @@ struct {
     Method method;
     char string[CMETHOD_LEN + 1];
 } c_method[2] = {
-  {LOGIN,"LOGIN"},
-  {LOGOUT,"LOGOUT"}
+    {STUP,"So stupid"},
+    {LOGIN,"LOGIN"},
+    {LOGOUT,"LOGOUT"}
 };
 
 int pack(int at);
