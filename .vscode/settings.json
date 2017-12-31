@@ -12,7 +12,8 @@
         "progressbar.h": "c",
         "statusbar.h": "c",
         "directory.h": "c",
-        "types.h": "c"
+        "types.h": "c",
+        "poll.h": "c"
     },
     "files.autoSave": "onFocusChange"
 }
