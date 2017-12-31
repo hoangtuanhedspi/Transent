@@ -10,8 +10,8 @@ typedef struct _cmd{
     char data[DATA_LEN];
 }Command;
 
-int valid_str_cmd(char* args);
-Command* parse_cmd(char* args);
-int valid_cmd(Command cmd);
-Command* suggest_cmd(Command cmd);
+extern int valid_str_cmd(char* args);
+extern Command* parse_cmd(char* args);
+extern int valid_cmd(Command cmd);
+extern Command* suggest_cmd(Command cmd);
 #endif
