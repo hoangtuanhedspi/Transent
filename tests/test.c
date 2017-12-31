@@ -180,11 +180,13 @@ void test_haihv(int argc, char* argv[]){
 
 void test_command(int argc, char* argv[]){
     printf("============Test command==============\n");
-    char* command = "logIn        hoangtuan *";
-    char* cmdpass = "PASS        124567&\%aHS";
-    Command* cmd = parse_cmd(command);
-    Command* cmdpwd = parse_cmd(cmdpass);
-    printf("Command:%s\nmethod:%s\ndata:%s\n",cmd->str_cmd,cmd->method,cmd->data);
-    if(valid_cmd(*cmdpwd))
-        printf("Command:%s\nmethod:%s\ndata:%s\n",cmdpwd->str_cmd,cmdpwd->method,cmdpwd->data);
+    char* command[10] = {"logIn        hoangtuan *\n",
+                         "PASS        124567&\%aHS\n",
+                         "FIND test.pdf\n"};
+    
+    for(int i = 0; i< 3; i++){
+        Command * cmd = parse_cmd(command[i]);
+        if(valid_cmd(*cmd))
+            printf("Command:%smethod:%d\ndata:%s\n",cmd->str_cmd,stom(cmd->method),cmd->data);
+    }
 }

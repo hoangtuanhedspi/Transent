@@ -117,27 +117,29 @@ int local_interac(struct pollfd poll, char* buff, char* payload, int sockfd){
 	method = valid_cmd(*cmd);
 
 	if(method == UNDEFINE){
+		loginfo("METHOD:%d\n",method);
 		exit(1);
 	}
-	
+
+	if(method == FIND){
+		add_request(buff,RQ_FILE);
+		attach_payload(buff,cmd->data,strlen(cmd->data));
+		msg_len = get_real_len(buff);
+		bytes_sent = send(sockfd, buff, msg_len, 0);
+	}
 	// while(getchar()!='\n');
 	// attach_payload(buff,payload,strlen(payload));
-	// loginfo("Payload:%s|len:%d|req:%d\n",detach_payload(buff),
-	// 									get_payload_size(buff),
-	// 									extract_request(buff));
+	
 	// if (wannaExit(payload)){
 	// 	printf("\n");
 	// 	return 0;
 	// }
 
-	// msg_len = get_real_len(buff);
-	// bytes_sent = send(sockfd, buff, msg_len, 0);
-	// if(bytes_sent <= 0){
-	// 	printf("\nConnection closed!\n");
-	// 	return 0;
-	// }
-	
-	// loginfo("Send:%dbyte\n",get_real_len(buff));
+	if(bytes_sent <= 0){
+		printf("\nConnection closed!\n");
+		return 0;
+	}
+
 	return 1;
 }
 
