@@ -13,7 +13,8 @@
         "statusbar.h": "c",
         "directory.h": "c",
         "types.h": "c",
-        "poll.h": "c"
+        "poll.h": "c",
+        "ctype.h": "c"
     },
     "files.autoSave": "onFocusChange"
 }

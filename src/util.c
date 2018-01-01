@@ -44,6 +44,7 @@ int drop_request(Queue** queue,Request* req){
 Request* new_request_object(Session* session, char * file_name){
     Request* res = tsalloc(Request,sizeof(Request));
     res->session = copy_session(session);
+    res->timeout = 0;
     res->file_name = tsalloc(char,CFN_LEN);
     bzero(res->file_name,CFN_LEN);
     strcpy(res->file_name,file_name);
@@ -60,11 +61,12 @@ char* clone_string(char* src){
     return res;
 }
 
-Request* make_request(Session* session,char* file_name){
+Request* make_request(Session* session,char* file_name, int timeout){
     Request* res = NULL;
     res = tsalloc(Request,1);
     res->session = copy_session(session);
     res->file_name = clone_string(file_name);
+    res->timeout = timeout;
     return res;
 }
 

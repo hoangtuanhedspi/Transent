@@ -30,6 +30,9 @@ $(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT)
 test: lib
 	$(CC) $(CFLAGS) tests/test.c $(LIB) $(INC) -o test
 
+sys: lib
+	$(CC) $(CFLAGS) tests/system.c $(LIB) $(INC) -o stest
+
 lib: $(LIBS)
 
 client: client.c

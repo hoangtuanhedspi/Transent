@@ -106,3 +106,13 @@ int stom(char* string_method){
 int mtos(Method method){
     return c_method[method].method;
 }
+
+void packet_info(char* buff){
+    printf("\nPackage contain %d byte\n\
+    method:%d\n\
+    payload:%s\n\
+    payload_size:%dbyte\n",get_real_len(buff),
+    extract_request(buff),
+    detach_payload(buff),
+    get_payload_size(buff));
+}

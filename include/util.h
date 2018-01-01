@@ -29,9 +29,12 @@
 #ifdef DEBUG
 #include <errno.h>
 //#define clean_errno() (errno == 0 ? "None" : strerror(errno))
-#define logerr(M, ...) fprintf(stderr, "[ERROR - line:%d] in FILE[%s] at FUNC[%s]:" M "\n", __LINE__, __FILE__, __func__, /*clean_errno(),*/ ##__VA_ARGS__)
-#define logwarn(M, ...) fprintf(stderr, "[WARN - line:%d] in FILE[%s] at FUNC[%s]:" M "\n",__LINE__, __FILE__, __func__, /*clean_errno(),*/ ##__VA_ARGS__)
-#define loginfo(M, ...) fprintf(stderr, "[INFO - line:%d] in FILE[%s] at FUNC[%s]:" M "\n", __LINE__, __FILE__, __func__, /*clean_errno(),*/ ##__VA_ARGS__)
+#define logerr(M, ...) fprintf(stderr, "[ERROR - line:%d] in FILE[%s] at FUNC[%s]:" M "\n",\
+                              __LINE__, __FILE__, __func__, /*clean_errno(),*/ ##__VA_ARGS__)
+#define logwarn(M, ...) fprintf(stderr, "[WARN - line:%d] in FILE[%s] at FUNC[%s]:" M "\n",\
+                              __LINE__, __FILE__, __func__, /*clean_errno(),*/ ##__VA_ARGS__)
+#define loginfo(M, ...) fprintf(stderr, "[INFO - line:%d] in FILE[%s] at FUNC[%s]:" M "\n",\
+                              __LINE__, __FILE__, __func__, /*clean_errno(),*/ ##__VA_ARGS__)
 #define check(A, M, ...) if(!(A)) { logerr(M, ##__VA_ARGS__);}
 #define check_mem(A) check(A, "Memory allocation error.")
 #else
@@ -52,19 +55,57 @@
 #define tsalloc(type,size) (type*)malloc(size*sizeof(type))
 
 typedef struct _request{
+    //Request session
     Session *session;
+    //Request file name
     char* file_name;
+    //Timeout in milisecond
+    int timeout;
 }Request;
 
 typedef Node Queue;
-
+/**
+ * 
+ */
 extern int parse_packet(char* buff,char* payload,int* size);
+
+/**
+ * 
+ */
 extern int wrap_packet(char* buff,char* payload,int size,int method);
+
+/**
+ * 
+ */
 extern Request* enqueue(Queue** queue,Request * request);
+
+/**
+ * 
+ */
 extern Request* dequeue(Queue** queue);
+
+/**
+ * 
+ */
 extern Request* new_request_object(Session* session, char * file_name);
+
+/**
+ * 
+ */
 extern char* clone_string(char* src);
-extern Request* make_request(Session* session,char* file_name);
+
+/**
+ * 
+ */
+extern Request* make_request(Session* session,char* file_name, int timeout);
+
+/**
+ * 
+ */
 extern int get_list_request(CacheList* list,Cache* cache,char* file_name);
+
+/**
+ * 
+ */
 extern int drop_request(Queue** queue,Request* req);
 #endif
