@@ -26,8 +26,17 @@ Request* enqueue(Queue** queue,Request * req_file){
 
 Request* dequeue(Queue** queue){
     Node * res = get_at(*queue,0);
+    Var data = clone_data(res);
     remove_node(queue,res);
-    return get_data(res);
+    return data;
+}
+
+Request* pop(Queue* queue){
+    if(!queue) return NULL;
+    Node * res = NULL;
+    res = get_at(queue,0);
+    if(!res) return NULL;
+    return res->data;
 }
 
 int compare_queue(Var des,Var res){

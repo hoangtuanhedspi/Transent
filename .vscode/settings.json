@@ -14,7 +14,8 @@
         "directory.h": "c",
         "types.h": "c",
         "poll.h": "c",
-        "ctype.h": "c"
+        "ctype.h": "c",
+        "signal.h": "c"
     },
     "files.autoSave": "onFocusChange"
 }

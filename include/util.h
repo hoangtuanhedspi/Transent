@@ -87,6 +87,11 @@ extern Request* dequeue(Queue** queue);
 /**
  * 
  */
+Request* pop(Queue* queue);
+
+/**
+ * 
+ */
 extern Request* new_request_object(Session* session, char * file_name);
 
 /**

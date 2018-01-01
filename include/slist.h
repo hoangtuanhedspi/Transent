@@ -26,6 +26,7 @@ void set_data(Node *node, Var data);
 Node *get_at(Node *list, unsigned int index);
 unsigned int length(Node *list);
 unsigned int remove_node(Node **list, Node *node);
+Var clone_data(Node* node);
 int remove_data(Node **list,
                          equal_function callback,
                          Var data);

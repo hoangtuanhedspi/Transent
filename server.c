@@ -5,6 +5,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <ctype.h>
+#include <pthread.h>
+#include <signal.h>
+#include <sys/time.h>
 
 #define DEBUG 1
 #include <transent/util.h>
@@ -19,12 +22,17 @@
 
 #define ERR_FNF "Can't find any once client contain this file!"
 
+typedef struct _thread_data{
+	CacheList* cache_list;
+	Queue ** req_queue;
+}PassData;
+
 Session sessions[SESSIONS];
 Queue *req_queue = NULL;
 CacheList* cache_list = NULL;
 /* Process command from client end return */
 void process(struct pollfd *po);
-
+void sig_handler(int signum);
 /* Close a connection */
 void closeConnection (struct pollfd *po, Session *ss);
 
@@ -34,16 +42,27 @@ void sent_to_others(Session* ss, char* buff);
 void process_find_file(Session* ss, char* buff, char* payload, int paylen);
 void process_file_founded(Session* ss, char* buff, char* payload, int paylen);
 void process_file_not_found(Session* ss, char* buff, char* payload, int paylen);
+CacheList* get_list_file(Request* request, CacheList* cache_list);
+void* timeout_thread(void * data);
+
+pthread_t timeout, main_thread;
 
 int main(int argc, char *argv[]) {
 	int port = 0;
+	int listenfd, *connfd;
+	struct sockaddr_in server;
+	struct sockaddr_in *client;
+	socklen_t sin_size;
+    int status;
+	PassData* pass_data;
+
 	// checking arguments
 	validArguments(argc, argv, &port);
 	init_cache_context(&cache_list);
-	int listenfd, *connfd;
-	struct sockaddr_in server; 		/* server's address information */
-	struct sockaddr_in *client; 	/* client's address information */
-	socklen_t sin_size;
+	pass_data = tsalloc(PassData,sizeof(PassData));
+	bzero(pass_data,sizeof(PassData));
+	pass_data->cache_list = cache_list;
+	pass_data->req_queue = &req_queue;
 
 	if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) == -1 ){  /* calls socket() */
 		perror("\nError: ");
@@ -75,8 +94,17 @@ int main(int argc, char *argv[]) {
 
 	/* Init sessions */
 	initSessions(sessions,SESSIONS);
-	
+
+	//Create timer thread
+    signal(SIGINT, sig_handler);
+
+    status = pthread_create(&timeout, NULL, &timeout_thread, pass_data);
+	if (status != 0) {
+        printf("Failed to create timer thread with status = %d\n", status);
+		exit(EXIT_FAILURE);
+    }
 	int revents;
+
 	while(1){
 		revents = poll(polls, POLLS, 10000);		/* Timeout = 10s */
 		if (revents > 0) {
@@ -109,7 +137,7 @@ int main(int argc, char *argv[]) {
 			}
 		}
 	}
-	
+	pthread_exit(NULL);
 	close(listenfd);
 	return 0;
 }
@@ -188,6 +216,7 @@ void process_find_file(Session* ss, char* buff, char* payload, int paylen){
 		enqueue(&req_queue,request);
 		wrap_packet(buff,payload,paylen,RQ_FILE);
 		sent_to_others(ss,buff);
+		printf("Queue size:%d-%p\n",length(req_queue),req_queue);
 	}else{
 		bytes_sent = wrap_packet(buff,ERR_FNF,strlen(ERR_FNF),NOTI_INF);
 		bytes_sent = send(ss->connfd,buff, bytes_sent, 0);
@@ -204,6 +233,8 @@ void process_file_founded(Session* ss, char* buff, char* payload, int paylen){
 		push_cache(cache_list,cache);
 	
 	printf("Cache size:%d\n",get_all_cache_size());
+	Request* req = make_request(ss,"test.pdf",0);
+	get_list_file(req,cache_list);
 }
 
 
@@ -225,20 +256,68 @@ void sent_to_others(Session* ss,char* buff){
 	}
 }
 
-int check_exist_file(Request* request, CacheList* cache_list){
-	
+int compare_cache_file_name(Var des,Var res){
+    if(!des || !res) return 0;
+    return strcmp(((Request*)des)->file_name,((Cache*)res)->file_name) == 0;
 }
 
-// typedef struct _request{
-//     //Request session
-//     Session *session;
-//     //Request file name
-//     char* file_name;
-//     //Timeout in milisecond
-//     int timeout;
-// }Request;
+CacheList* get_list_file(Request* request, CacheList* cache_list){
+	if(!request || !cache_list) return NULL;
+	CacheList* tmp;
+	CacheList* res = NULL;
+	tmp = cache_list;
+	while(tmp != NULL){
+		if(compare_cache_file_name(request,tmp->data)!=0){
+			append(&res,tmp->data);
+		}
+		tmp = tmp->next;
+	}
+	return res;
+}
 
-// typedef struct _cache{
-//     char file_name[CFN_LEN];
-//     char uid_hash[UID_HASH_LEN];
-// }Cache;
+void* timeout_thread(void * data){
+	CacheList* list = ((PassData*)data)->cache_list;
+	Queue** req = NULL;
+	req = ((PassData*)data)->req_queue;
+	char buff[BUFF_SIZE];
+	char payload[PAY_LEN];
+	bzero(buff,BUFF_SIZE);
+	while(1){
+		if(*req)
+			printf("%p\n",*req);
+		if(get_all_cache_size()>0){
+			Request* request = pop(*req);
+			if(request){
+				printf("File name:%sId:%s\n",request->file_name,request->session->id);
+				CacheList* smlist = get_list_file(request,list);
+				int len = length(smlist);
+				if(len>0){
+					printf("Sent\n");
+					int bytes_sent = 0;
+					Cache* arr = list_cache_to_array(smlist);
+					add_request(buff,RP_FLIST);
+					memcpy(payload,arr,len*sizeof(Cache));
+					attach_payload(buff,payload,len*sizeof(Cache));
+					printf("Connfd:%d\n",request->session->connfd);
+					bytes_sent = get_real_len(buff);
+					bytes_sent = send(request->session->connfd,buff, bytes_sent, 0);
+					if(bytes_sent<=0){
+						printf("LOL\n");
+					}
+					drop_request(req,request);
+				}
+			}
+		}
+		sleep(1);
+	}
+	pthread_exit(NULL);
+}
+
+void sig_handler(int signum) {
+    if (signum != SIGINT) {
+        printf("Received invalid signum = %d in sig_handler()\n", signum);
+    }
+    printf("Received SIGINT. Exiting threads\n");
+    pthread_cancel(timeout);
+	exit(EXIT_SUCCESS);
+}
