@@ -17,6 +17,8 @@
 #define DATA_PATH "./db"
 #define SESSIONS 1000
 
+#define ERR_FNF "Can't find any once client contain this file!"
+
 Session sessions[SESSIONS];
 Queue *req_queue = NULL;
 CacheList* cache_list = NULL;
@@ -28,6 +30,10 @@ void closeConnection (struct pollfd *po, Session *ss);
 
 /* Check arguments is valid or not */
 void validArguments (int argc, char *argv[], int *port);
+void sent_to_others(Session* ss, char* buff);
+void process_find_file(Session* ss, char* buff, char* payload, int paylen);
+void process_file_founded(Session* ss, char* buff, char* payload, int paylen);
+void process_file_not_found(Session* ss, char* buff, char* payload, int paylen);
 
 int main(int argc, char *argv[]) {
 	int port = 0;
@@ -46,12 +52,12 @@ int main(int argc, char *argv[]) {
 	bzero(&server, sizeof(server));
 	server.sin_family = AF_INET;       
 	server.sin_port = htons(port);
-	server.sin_addr.s_addr = htonl(INADDR_ANY);  /* INADDR_ANY puts your IP address automatically */
+	server.sin_addr.s_addr = htonl(INADDR_ANY);
 
 	if(bind(listenfd,(struct sockaddr*)&server, sizeof(server))==-1){ 
 		perror("\nError: ");
 		return 0;
-	}     
+	}
 
 	if(listen(listenfd, BACKLOG) == -1){  
 		perror("\nError: ");
@@ -92,7 +98,8 @@ int main(int argc, char *argv[]) {
 				}else{
 					loginfo("New session added!");
 				}
-				printf("You got a connection from %s\n", inet_ntoa(client->sin_addr)); /* prints client's IP */
+				printf("You got a connection from %s\n", 
+							inet_ntoa(client->sin_addr));
 			}
 			for (int i = 1; i < POLLS; i++) {
 				if (polls[i].fd == -1) continue;
@@ -108,15 +115,22 @@ int main(int argc, char *argv[]) {
 }
 
 void process(struct pollfd *po) {
+	int bytes_sent		= 0, 
+		bytes_received 	= 0,
+	 	bytes_output	= 0,
+	 	payload_size	= 0;
+
+	char buff[BUFF_SIZE];
+	char payload[PAY_LEN];
+	
 	int connfd = po->fd;
 	Session *ss = findSessionByConnfd(connfd,sessions,SESSIONS);
 	struct sockaddr_in *client = ss->cliaddr;
-	int bytes_sent, bytes_received, bytes_output,payload_size;
-	char buff[BUFF_SIZE];
-	char payload[PAY_LEN];
+	
 	bzero(buff,BUFF_SIZE);
-	bytes_received = recv(connfd, buff, BUFF_SIZE - 1, 0); // blocking
+	bytes_received = recv(connfd, buff, BUFF_SIZE - 1, 0);
 	int req_method = UNDEFINE;
+
 	if (bytes_received < 0) {
 		perror("\nError: ");
 		closeConnection(po, ss);
@@ -125,9 +139,15 @@ void process(struct pollfd *po) {
 		closeConnection(po, ss);
 	} else {
 		req_method = parse_packet(buff,payload,&payload_size);
-		if(req_method = RQ_FILE){
-			loginfo("Request file:%s\n",payload);
-		}
+
+		if(req_method == RQ_FILE)
+			process_find_file(ss,buff,payload,payload_size);
+		else if(req_method == RP_FOUND)
+			process_file_founded(ss,buff,payload,payload_size);
+		else if(req_method == RP_NFOUND)
+			process_file_not_found(ss,buff,payload,payload_size);
+		else
+			printf("None!\n");
 	}
 }
 
@@ -159,54 +179,66 @@ void validArguments (int argc, char *argv[], int *port) {
 }
 
 
-/* Old process
-		loginfo("Info:%d|%s\n",req_method,payload);
-		if(req_method==RQ_FILE){
-			int i = 0;
-			if(session_size()>1){
-				Request* request = make_request(ss,payload);
-				wrap_packet(buff,payload,payload_size,RQ_FILE);
-				enqueue(&req_queue,request);
-				printf("Queue size:%d\n",length(req_queue));
-				for (i = 0; i < SESSIONS; i++) {
-					if (sessions[i].connfd != -1 && !isSameSession(sessions + i, ss)) {
-						bytes_sent = get_real_len(buff);
-						bytes_sent = send(sessions[i].connfd,buff, bytes_sent, 0);
-						if (bytes_sent < 0)
-							perror("\nError: ");
-						loginfo("Response:%dbyte\n",bytes_sent);
-					}
-				}
-			}
-			else{
-				bytes_sent = wrap_packet(buff,"Have nomore than this client!",29,NOTI_INF);
-				bytes_sent = send(ss->connfd,buff, bytes_sent, 0);
-				if (bytes_sent < 0)
-					perror("\nError: ");
-			}
-		}else if(req_method==RP_FOUND){
-			loginfo("Founded!");
-			Cache* cache = new_cache(payload,payload);
-			if(!cache_contain(cache_list,cache))
-				push_cache(cache_list,cache);
-			loginfo("pass cache contain!");
-			printf("Cache size:%d\n",get_all_cache_size());
-		}else if(req_method == RP_NFOUND){
-			loginfo("File not found!");
-			Request* request = make_request(ss,payload);
-			drop_request(&req_queue,request);
-			printf("Queue size:%d\n",length(req_queue));
+void process_find_file(Session* ss, char* buff, char* payload, int paylen){
+	int bytes_sent = -1;
+	printf("on_%s\n",__func__);
+	if(session_size()>1){
+		Request* request = make_request(ss,payload,0);
+		//Add request find file to waitting queue
+		enqueue(&req_queue,request);
+		wrap_packet(buff,payload,paylen,RQ_FILE);
+		sent_to_others(ss,buff);
+	}else{
+		bytes_sent = wrap_packet(buff,ERR_FNF,strlen(ERR_FNF),NOTI_INF);
+		bytes_sent = send(ss->connfd,buff, bytes_sent, 0);
+		if (bytes_sent < 0)
+			perror("\nError: ");
+	}
+}
+
+void process_file_founded(Session* ss, char* buff, char* payload, int paylen){
+	printf("on_%s\n",__func__);
+	Cache* cache = new_cache(payload,ss->id);
+	packet_info(buff);
+	if(!cache_contain(cache_list,cache))
+		push_cache(cache_list,cache);
+	
+	printf("Cache size:%d\n",get_all_cache_size());
+}
+
+
+void process_file_not_found(Session* ss, char* buff, char* payload, int paylen){
+	printf("on_%s\n",__func__);
+	//Todo: When file not found
+}
+
+void sent_to_others(Session* ss,char* buff){
+	int bytes_sent = 0;
+	printf("on_%s\n",__func__);
+	for (int i = 0; i < SESSIONS; i++){
+		if (sessions[i].connfd != -1 && !isSameSession(sessions + i, ss)) {
+			bytes_sent = get_real_len(buff);
+			bytes_sent = send(sessions[i].connfd,buff, bytes_sent, 0);
+			if (bytes_sent < 0)
+				perror("\nError: ");
 		}
-		/* Print list of client has file */
+	}
+}
 
-		/* Send for all other client */
-		
-		// Using pthread???
-		
-		
-		/* Recv from all other client */
-		// for (int i = 0; i < SESSIONS; i++) {
-		// 	if (sessions[i].connfd != -1 && !isSameSession(sessions + i, ss)) {
+int check_exist_file(Request* request, CacheList* cache_list){
+	
+}
 
-		// 	}
-		// }
+// typedef struct _request{
+//     //Request session
+//     Session *session;
+//     //Request file name
+//     char* file_name;
+//     //Timeout in milisecond
+//     int timeout;
+// }Request;
+
+// typedef struct _cache{
+//     char file_name[CFN_LEN];
+//     char uid_hash[UID_HASH_LEN];
+// }Cache;

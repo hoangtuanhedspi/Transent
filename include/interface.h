@@ -93,4 +93,5 @@ int valid_method(int method);
 int get_real_len(char* buff);
 int stom(char* string_method);
 int mtos(Method method);
+void packet_info(char* buff);
 #endif

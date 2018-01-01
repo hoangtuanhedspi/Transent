@@ -9,7 +9,7 @@ int saved_cache_size = 0;
 
 #define throw_init_error if(!is_init){\
     printf("Please initial cache context\
-             before using it!\n");\
+before using it!\n");\
     exit(0);\
 }
 
@@ -51,6 +51,7 @@ int get_all_cache_size(){
 }
 
 int compare_cache(Var des,Var res){
+    if(!des || !res) return 0;
     return strcmp(((Cache*)des)->file_name,((Cache*)res)->file_name) == 0 
            & strcmp(((Cache*)des)->uid_hash,((Cache*)res)->uid_hash) == 0;
 }

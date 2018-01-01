@@ -144,7 +144,7 @@ Node *find_data(Node *list,
                 equal_function callback,
                 Var data){
   Node *tmp;
-	tmp=list;  
+	tmp=list;
   while(tmp!= NULL){
 		if (callback(tmp->data, data)!=0) {
       return tmp;

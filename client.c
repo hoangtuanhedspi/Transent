@@ -20,8 +20,8 @@
 
 /* Check arguments is valid or not. If valid ip -> *serv_ip, port -> &serv_port */
 void validArguments (int argc, char *argv[], char *serv_ip, int *serv_port);
-int local_interac(struct pollfd poll, char* buff, char* payload, int sockfd);
-int server_interac(struct pollfd poll, char* buff, char* payload, int sockfd);
+int local_interac(char* buff, char* payload, int sockfd);
+int server_interac(char* buff, char* payload, int sockfd);
 /* Check wanna exit */
 _Bool wannaExit (char *buff);
 
@@ -29,9 +29,7 @@ int main(int argc, char *argv[]) {
 	int 	server_port = 0;
 	int 	revents = -1;
 	int 	client_sock;
-	int 	msg_len, 
-			bytes_sent, 
-			bytes_received;
+	int 	res;
 	char 	server_ip[16] = "";
 	char 	buff[BUFF_SIZE],
 			payload[PAY_LEN];
@@ -60,10 +58,11 @@ int main(int argc, char *argv[]) {
 		revents = poll(polls, POLLS, 20000);
 		if (revents > 0) {
 			if (polls[0].revents & POLLIN)
-				local_interac(polls[0],buff,payload,client_sock);
+				res = local_interac(buff,payload,client_sock);
 
 			if (polls[1].revents & POLLIN)
-				server_interac(polls[1],buff,payload,client_sock);
+				res = server_interac(buff,payload,client_sock);
+			if(res==0) break;
 		}
 	}
 	end_process:
@@ -103,7 +102,7 @@ void validArguments (int argc, char *argv[], char *serv_ip, int *serv_port) {
 }
 
 
-int local_interac(struct pollfd poll, char* buff, char* payload, int sockfd){
+int local_interac(char* buff, char* payload, int sockfd){
 	Method method = STUP;
 	Command* cmd = NULL;
 	int	bytes_sent 	= 0,
@@ -127,13 +126,6 @@ int local_interac(struct pollfd poll, char* buff, char* payload, int sockfd){
 		msg_len = get_real_len(buff);
 		bytes_sent = send(sockfd, buff, msg_len, 0);
 	}
-	// while(getchar()!='\n');
-	// attach_payload(buff,payload,strlen(payload));
-	
-	// if (wannaExit(payload)){
-	// 	printf("\n");
-	// 	return 0;
-	// }
 
 	if(bytes_sent <= 0){
 		printf("\nConnection closed!\n");
@@ -143,39 +135,41 @@ int local_interac(struct pollfd poll, char* buff, char* payload, int sockfd){
 	return 1;
 }
 
-int server_interac(struct pollfd poll,char* buff, char* payload,int sockfd){
-	// int req_response   = UNDEFINE,
-	// 	msg_len 	   = 0, 
-	// 	bytes_transfer = 0;
+int server_interac(char* buff, char* payload,int sockfd){
+	int req_response   = UNDEFINE,
+		msg_len 	   = 0, 
+		bytes_transfer = 0;
 
-	// bzero(buff,BUFF_SIZE);
-	// bytes_transfer = recv(sockfd, buff, BUFF_SIZE-1, 0);
-	// if(bytes_transfer <= 0){
-	// 	printf("\nError!Cannot receive data from sever!\n");
-	// 	return 0;
-	// }
+	bzero(buff,BUFF_SIZE);
 
-	// req_response = parse_packet(buff,payload,&bytes_transfer);
+	bytes_transfer = recv(sockfd, buff, BUFF_SIZE-1, 0);
+	if(bytes_transfer <= 0){
+		printf("\nError!Cannot receive data from sever!\n");
+		return 0;
+	}
 
-	// if(req_response == RQ_FILE){
-	// 	char* filename = detach_payload(buff);
-	// 	loginfo("filename:%s\n",filename);
-	// 	if(existFile(DATA_PATH,filename)){
-	// 		add_request(buff,RP_FOUND);
-	// 		attach_payload(buff,filename,0);
-	// 		msg_len = get_real_len(buff);
-	// 		msg_len = send(sockfd, buff, msg_len, 0);
-	// 		loginfo("Founded!\n");
-	// 	}else{
-	// 		add_request(buff,RP_NFOUND);
-	// 		msg_len = send(sockfd, buff, msg_len, 0);
-	// 		loginfo("Not found:%s\n",buff+HEADER_LEN);
-	// 	}
-	// 	free(filename);
-	// }else if(req_response == RP_FLIST){
+	req_response = parse_packet(buff,payload,&bytes_transfer);
+	printf("on_%s\n",__func__);
+	if(req_response == RQ_FILE){
+		char* filename = detach_payload(buff);
+		if(existFile(DATA_PATH,filename)){
+			add_request(buff,RP_FOUND);
+			attach_payload(buff,filename,strlen(filename));
+			msg_len = get_real_len(buff);
+			msg_len = send(sockfd, buff, msg_len, 0);
+			if(msg_len<0)
+				return 0;
+		}else{
+			add_request(buff,RP_NFOUND);
+			msg_len = send(sockfd, buff, msg_len, 0);
+			if(msg_len<0)
+				return 0;
+		}
+		free(filename);
+	}else if(req_response == RP_FLIST){
 		
-	// }else if(req_response == NOTI_INF){
-	// 	printf("Server noti:%s\n",payload);
-	// }
-	return 0;
+	}else if(req_response == NOTI_INF){
+		fprintf(stderr,"\nServer noti:%s\n",payload);
+	}
+	return 1;
 }

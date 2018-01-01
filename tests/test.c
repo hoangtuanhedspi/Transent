@@ -30,13 +30,13 @@ void test_haihv(int argc, char* argv[]);
 void test_command(int argc, char* argv[]);
 
 int main(int argc, char* argv[]){
-    test_directory(argc,argv);
-    test_interface(argc,argv);
-    test_poll(argc,argv);
-    test_session(argc,argv);
+    //test_directory(argc,argv);
+    //test_interface(argc,argv);
+    //test_poll(argc,argv);
+    //test_session(argc,argv);
     test_tsfmanage(argc,argv);
-    test_haihv(argc,argv);
-    test_command(argc,argv);
+    //test_haihv(argc,argv);
+   // test_command(argc,argv);
     return 0;
 }
 
@@ -109,8 +109,8 @@ void test_tsfmanage(int argc, char* argv[]){
     printf("Sizeof one cache:%d\n",sizeof(Cache));
     init_cache_context(&list);
     Queue* queue = NULL;
-    enqueue(&queue,make_request(NULL,"abc"));
-    enqueue(&queue,make_request(NULL,"def"));
+    enqueue(&queue,make_request(NULL,"abc",10));
+    enqueue(&queue,make_request(NULL,"def",10));
     printf("LOL:%s\n",((Request*)queue->data)->file_name);
     Cache* cache = new_cache("abc","def");
     assert(strcmp(cache->file_name,"abc")==0);
@@ -119,13 +119,12 @@ void test_tsfmanage(int argc, char* argv[]){
     remove_cache(list,cache);
     cache = new_cache("abc","def");
     push_cache(list,cache);
-    push_cache(list,cache);
     cache = new_cache("abg","duf");
     push_cache(list,cache);
-    Cache* get = (Cache*)(get_at(list,2)->data);
+    Cache* get = (Cache*)(get_at(list,1)->data);
 
     assert(strcmp(get->file_name,"abg")==0);
-    if(!cache_contain(list,get))
+    if(cache_contain(list,get))
         printf("Cache Size:%d|In all:%d\n",get_cache_size(list),get_all_cache_size());
     Cache req[24];
     printf("Pass!\n");
@@ -134,7 +133,7 @@ void test_tsfmanage(int argc, char* argv[]){
     for (i=0;i<s;i++)
         printf("Request file:%s\n",req[i].uid_hash);
     
-    drop_request(&queue,make_request(NULL,"abc"));
+    drop_request(&queue,make_request(NULL,"abc",10));
     printf("Queue size:%d\n",length(queue));
 }
 
@@ -150,13 +149,13 @@ void test_haihv(int argc, char* argv[]){
     
     struct sockaddr_in *sock = (struct sockaddr_in *) malloc(sizeof(struct sockaddr_in));
     newSession(sock, 4, sessions, SESSIONS);
-    newSession(sock, 5, sessions, SESSIONS);
+    newSession(sock, 4, sessions, SESSIONS);
     newSession(sock, 6, sessions, SESSIONS);
     newSession(sock, 7, sessions, SESSIONS);
 
 
     loginUser(4, "haihv", sessions, SESSIONS, users, USERS);
-    loginUser(5, "admin", sessions, SESSIONS, users, USERS);
+    //loginUser(5, "admin", sessions, SESSIONS, users, USERS);
     loginUser(6, "notfound", sessions, SESSIONS, users, USERS);
     loginUser(7, "block", sessions, SESSIONS, users, USERS);
 
@@ -165,17 +164,18 @@ void test_haihv(int argc, char* argv[]){
     loginPass(4, "wrong", sessions, SESSIONS, users, USERS);
     loginPass(4, "wrong", sessions, SESSIONS, users, USERS);
     // loginPass(4, "haihv", sessions, SESSIONS, users, USERS);
-    loginPass(5, "admin", sessions, SESSIONS, users, USERS);
+    //loginPass(5, "admin", sessions, SESSIONS, users, USERS);
     loginPass(6, "notfound", sessions, SESSIONS, users, USERS);
     loginPass(7, "block", sessions, SESSIONS, users, USERS);
 
     logout(4, "haihv", "wrong", sessions, SESSIONS, users, USERS);
-    logout(5, "admin", "admin", sessions, SESSIONS, users, USERS);
+    //logout(5, "admin", "admin", sessions, SESSIONS, users, USERS);
     logout(6, "notfound", "notfound", sessions, SESSIONS, users, USERS);
     logout(7, "block", "block", sessions, SESSIONS, users, USERS);
     printf("Size:%d\n",session_size());
 
     printSessions(sessions, SESSIONS);
+    //assert(isSameSession()==1)
 }
 
 void test_command(int argc, char* argv[]){
@@ -189,4 +189,5 @@ void test_command(int argc, char* argv[]){
         if(valid_cmd(*cmd))
             printf("Command:%smethod:%d\ndata:%s\n",cmd->str_cmd,stom(cmd->method),cmd->data);
     }
+    assert(RP_FOUND == RQ_FILE);
 }
