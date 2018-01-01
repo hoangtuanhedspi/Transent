@@ -1,54 +1,30 @@
+#include <pthread.h>
 #include <stdio.h>
-#include <time.h>
-#include <signal.h>
+#include <stdlib.h>
 
-timer_t gTimerid;
-
-void start_timer(void)
+void *worker_thread(void *arg)
 {
-
-
-struct itimerspec value;
-
-value.it_value.tv_sec = 1;
-value.it_value.tv_nsec = 0;
-
-value.it_interval.tv_sec = 1;
-value.it_interval.tv_nsec = 0;
-
-timer_create (CLOCK_REALTIME, NULL, &gTimerid);
-
-timer_settime (gTimerid, 0, &value, NULL);
-
+    while(1){
+      printf("This is worker_thread()\n");
+      sleep(2);
+    }
+    pthread_exit(NULL);
 }
 
-void stop_timer(void)
+int main()
 {
+        pthread_t my_thread;
+        int ret;
 
-
-struct itimerspec value;
-
-value.it_value.tv_sec = 0;
-value.it_value.tv_nsec = 0;
-
-value.it_interval.tv_sec = 0;
-value.it_interval.tv_nsec = 0;
-
-timer_settime (gTimerid, 0, &value, NULL);
-
-
-}
-
-
-void timer_callback(int sig) {
-
- printf(" Catched timer signal: %d ... !!\n", sig);
-
-}
-
-int main(int ac, char **av)
-{
-    (void) signal(SIGALRM, timer_callback);
-    start_timer();
-    while(1);
+        printf("In main: creating thread\n");
+        ret =  pthread_create(&my_thread, NULL, &worker_thread, NULL);
+        if(ret != 0) {
+                printf("Error: pthread_create() failed\n");
+                exit(EXIT_FAILURE);
+        }
+        while(1){
+          printf("lol\n");
+          sleep(1);
+        }
+        pthread_exit(NULL);
 }

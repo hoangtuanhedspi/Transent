@@ -34,9 +34,9 @@ int main(int argc, char* argv[]){
     //test_interface(argc,argv);
     //test_poll(argc,argv);
     //test_session(argc,argv);
-    test_tsfmanage(argc,argv);
+    //test_tsfmanage(argc,argv);
     //test_haihv(argc,argv);
-   // test_command(argc,argv);
+    test_command(argc,argv);
     return 0;
 }
 
@@ -133,7 +133,11 @@ void test_tsfmanage(int argc, char* argv[]){
     for (i=0;i<s;i++)
         printf("Request file:%s\n",req[i].uid_hash);
     
-    drop_request(&queue,make_request(NULL,"abc",10));
+    //drop_request(&queue,make_request(NULL,"abc",10));
+    Cache* arr = list_cache_to_array(list);
+    for(int i = 0; i< get_cache_size(list);i++){
+        printf("%s-%s\n",arr[i].file_name,arr[i].uid_hash);
+    }
     printf("Queue size:%d\n",length(queue));
 }
 
@@ -189,5 +193,8 @@ void test_command(int argc, char* argv[]){
         if(valid_cmd(*cmd))
             printf("Command:%smethod:%d\ndata:%s\n",cmd->str_cmd,stom(cmd->method),cmd->data);
     }
-    assert(RP_FOUND == RQ_FILE);
+    //assert(RP_FOUND == RQ_FILE);
+    char* hello = "Hello";
+    Var* data = hello;
+    printf("Sizeof:%d\n",sizeof(data));
 }

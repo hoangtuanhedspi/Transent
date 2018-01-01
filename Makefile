@@ -9,8 +9,8 @@ LIBS := ./bin/lib/libtransent.a
 SRCEXT := c
 SOURCES := $(shell find $(SRCDIR) -type f -name '*.$(SRCEXT)')
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
-CFLAGS := -w --std=c99
-LIB := -L./bin/lib -ltransent -lpthread
+CFLAGS := -w
+LIB := -L./bin/lib -ltransent -lpthread -lrt
 INC := -I./bin/include
 
 all: lib client server

@@ -45,4 +45,6 @@ extern int remove_cache(CacheList * list,Cache * cache);
 
 extern int cache_contain(CacheList * list,Cache * cache);
 
+extern Cache* list_cache_to_array(CacheList* list);
+
 #endif
