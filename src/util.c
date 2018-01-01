@@ -33,7 +33,8 @@ Request* dequeue(Queue** queue){
 
 Request* pop(Queue* queue){
     if(!queue) return NULL;
-    Node * res = get_at(queue,0);
+    Node * res = NULL;
+    res = get_at(queue,0);
     if(!res) return NULL;
     return res->data;
 }

@@ -63,6 +63,7 @@ int main(int argc, char *argv[]) {
 	bzero(pass_data,sizeof(PassData));
 	pass_data->cache_list = cache_list;
 	pass_data->req_queue = &req_queue;
+
 	if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) == -1 ){  /* calls socket() */
 		perror("\nError: ");
 		return 0;
@@ -215,6 +216,7 @@ void process_find_file(Session* ss, char* buff, char* payload, int paylen){
 		enqueue(&req_queue,request);
 		wrap_packet(buff,payload,paylen,RQ_FILE);
 		sent_to_others(ss,buff);
+		printf("Queue size:%d-%p\n",length(req_queue),req_queue);
 	}else{
 		bytes_sent = wrap_packet(buff,ERR_FNF,strlen(ERR_FNF),NOTI_INF);
 		bytes_sent = send(ss->connfd,buff, bytes_sent, 0);
@@ -275,17 +277,36 @@ CacheList* get_list_file(Request* request, CacheList* cache_list){
 
 void* timeout_thread(void * data){
 	CacheList* list = ((PassData*)data)->cache_list;
-	Queue* req = *(((PassData*)data)->req_queue);
+	Queue** req = NULL;
+	req = ((PassData*)data)->req_queue;
+	char buff[BUFF_SIZE];
+	char payload[PAY_LEN];
+	bzero(buff,BUFF_SIZE);
 	while(1){
-		if(list)
-			printf("Test time out!\n");
-		Request* request = pop(list);
-		if(request){
-			printf("Founded!\n");
-			printf("File name:%s\n",request->file_name);
-			//CacheList* smlist = get_list_file(request,list);
-			//Cache* arr = list_cache_to_array(smlist);
-			//printf("Size:%d\n",length(list));
+		if(*req)
+			printf("%p\n",*req);
+		if(get_all_cache_size()>0){
+			Request* request = pop(*req);
+			if(request){
+				printf("File name:%sId:%s\n",request->file_name,request->session->id);
+				CacheList* smlist = get_list_file(request,list);
+				int len = length(smlist);
+				if(len>0){
+					printf("Sent\n");
+					int bytes_sent = 0;
+					Cache* arr = list_cache_to_array(smlist);
+					add_request(buff,RP_FLIST);
+					memcpy(payload,arr,len*sizeof(Cache));
+					attach_payload(buff,payload,len*sizeof(Cache));
+					printf("Connfd:%d\n",request->session->connfd);
+					bytes_sent = get_real_len(buff);
+					bytes_sent = send(request->session->connfd,buff, bytes_sent, 0);
+					if(bytes_sent<=0){
+						printf("LOL\n");
+					}
+					drop_request(req,request);
+				}
+			}
 		}
 		sleep(1);
 	}

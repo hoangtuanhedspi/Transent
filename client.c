@@ -149,7 +149,7 @@ int server_interac(char* buff, char* payload,int sockfd){
 	}
 
 	req_response = parse_packet(buff,payload,&bytes_transfer);
-	printf("on_%s\n",__func__);
+	printf("on_%s with response %d\n",__func__,req_response);
 	if(req_response == RQ_FILE){
 		char* filename = detach_payload(buff);
 		if(existFile(DATA_PATH,filename)){
@@ -167,7 +167,7 @@ int server_interac(char* buff, char* payload,int sockfd){
 		}
 		free(filename);
 	}else if(req_response == RP_FLIST){
-		
+		printf("File founded start receiver\n");
 	}else if(req_response == NOTI_INF){
 		fprintf(stderr,"\nServer noti:%s\n",payload);
 	}
