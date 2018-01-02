@@ -114,8 +114,8 @@ int stom(char* string_method){
     return UNDEFINE;
 }
 
-int mtos(Method method){
-    return c_method[method].method;
+char* mtos(Method method){
+    return c_method[method].string;
 }
 
 void packet_info(char* buff){

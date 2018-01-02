@@ -13,7 +13,8 @@ Command* parse_cmd(char* args){
     Command* cmd = (Command*)malloc(sizeof(Command));
     bzero(cmd,sizeof(Command));
     strcpy(cmd->str_cmd,args);
-    sscanf(args,"%[^ ]%*[^0-9a-z]%[^\n ]",cmd->method,cmd->data);
+    sscanf(args,"%[^ ]%*[^0-9a-z]%[^\n ]",
+                    cmd->method,cmd->data);
     strupp(cmd->method);
     return cmd;
 }

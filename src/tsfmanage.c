@@ -69,17 +69,15 @@ int cache_contain(CacheList * list,Cache * cache){
     return find_data(list,compare_cache,cache) != NULL;
 }
 
-
 Cache* list_cache_to_array(CacheList* list){
+    CacheList*  tmp = list;
+    int         i   = 0;
 	int length = get_cache_size(list);
 	Cache* res = tsalloc(Cache,length*sizeof(Cache));
 	bzero(res,length*sizeof(Cache));
-	CacheList* tmp = list;
-	int i = 0;
 	while(tmp != NULL){
 		res[i] = *((Cache*)tmp->data);
-        i++;
-		tmp = tmp->next;
+		tmp = tmp->next;i++;
 	}
 	return res;
 }
