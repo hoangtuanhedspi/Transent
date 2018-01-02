@@ -47,21 +47,13 @@
 #include "slist.h"
 #include "session.h"
 #include "tsfmanage.h"
+#include "interface.h"
 
 #define MAX_SYNC_SIZE 24
 #define ARGERR "Error: Too few arguments!\n"
 #define PARGERR "Error: Invalid port argument!\n"
 #define ADDERR "Error: Invalid address argument!\n"
 #define tsalloc(type,size) (type*)malloc(size*sizeof(type))
-#define DEFAULT_TIMEOUT 30
-typedef struct _request{
-    //Request session
-    Session *session;
-    //Request file name
-    char* file_name;
-    //Timeout in milisecond
-    int timeout;
-}Request;
 
 typedef Node Queue;
 /**
@@ -77,40 +69,22 @@ extern int wrap_packet(char* buff,char* payload,int size,int method);
 /**
  * 
  */
-extern Request* enqueue(Queue** queue,Request * request);
+extern Var enqueue(Queue** queue,Var request);
 
 /**
  * 
  */
-extern Request* dequeue(Queue** queue);
+extern Var dequeue(Queue** queue);
 
 /**
  * 
  */
-Request* pop(Queue* queue);
+Var pop(Queue* queue);
 
-/**
- * 
- */
-extern Request* new_request_object(Session* session, char * file_name, int timeout);
 
 /**
  * 
  */
 extern char* clone_string(char* src);
 
-/**
- * 
- */
-extern Request* make_request(Session* session,char* file_name, int timeout);
-
-/**
- * 
- */
-extern int get_list_request(CacheList* list,Cache* cache,char* file_name);
-
-/**
- * 
- */
-extern int drop_request(Queue** queue,Request* req);
 #endif
