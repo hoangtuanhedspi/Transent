@@ -53,6 +53,8 @@
 #define RP_NFOUND   0x0001 << 4
 //Response list client struct
 #define RP_FLIST    0x0001 << 5
+//Stick data stream continue transfer
+#define RP_STREAM   0x0001 << 6
 //Undefine method
 #define UNDEFINE    -1
 //Stick end of data stream
@@ -94,4 +96,6 @@ int get_real_len(char* buff);
 int stom(char* string_method);
 int mtos(Method method);
 void packet_info(char* buff);
+int add_response_number(char* buff, int number);
+int extract_response_number(char* buff);
 #endif

@@ -53,7 +53,7 @@
 #define PARGERR "Error: Invalid port argument!\n"
 #define ADDERR "Error: Invalid address argument!\n"
 #define tsalloc(type,size) (type*)malloc(size*sizeof(type))
-
+#define DEFAULT_TIMEOUT 30
 typedef struct _request{
     //Request session
     Session *session;
@@ -92,7 +92,7 @@ Request* pop(Queue* queue);
 /**
  * 
  */
-extern Request* new_request_object(Session* session, char * file_name);
+extern Request* new_request_object(Session* session, char * file_name, int timeout);
 
 /**
  * 

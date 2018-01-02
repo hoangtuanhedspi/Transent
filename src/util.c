@@ -50,10 +50,10 @@ int drop_request(Queue** queue,Request* req){
     return res;
 }
 
-Request* new_request_object(Session* session, char * file_name){
+Request* new_request_object(Session* session, char * file_name, int timeout){
     Request* res = tsalloc(Request,sizeof(Request));
     res->session = copy_session(session);
-    res->timeout = 0;
+    res->timeout = timeout;
     res->file_name = tsalloc(char,CFN_LEN);
     bzero(res->file_name,CFN_LEN);
     strcpy(res->file_name,file_name);

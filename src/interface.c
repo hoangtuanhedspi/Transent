@@ -52,6 +52,17 @@ int extract_request(char* buff){
     return req;
 }
 
+int add_response_number(char* buff, int number){
+    memcpy(buff+pack(PACK_WIDEN),&number,PACK_SIZE);
+    return number;
+}
+
+int extract_response_number(char* buff){
+    int req = UNDEFINE;
+    memcpy(&req,buff+pack(PACK_WIDEN),PACK_SIZE);
+    return req;
+}
+
 void* attach_payload(char* buff,char* payload,unsigned int size){
     bzero(buff+HEADER_LEN,PAY_LEN);
     memcpy(buff+pack(PACK_PAYSIZE),&size,PACK_SIZE);
