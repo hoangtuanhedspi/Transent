@@ -167,9 +167,24 @@ int server_interac(char* buff, char* payload,int sockfd){
 		}
 		free(filename);
 	}else if(req_response == RP_FLIST){
-		printf("File founded start receiver\n");
+		int number = extract_response_number(buff);
+		Cache arr[number];
+		int select = -1;
+		memcpy(arr,payload,number*sizeof(Cache));
+		printf("Select:\n");
+		for(int i = 0;i<number;i++){
+			printf("\nClient ID: %s | File name: %s",arr[i].uid_hash,arr[i].file_name);
+		}
+		scanf("%d",&select);
+		while(getchar()!='\n');
+		memcpy(payload,arr+select,sizeof(Cache));
+		wrap_packet(buff,payload,sizeof(Cache),RQ_DL);
 	}else if(req_response == NOTI_INF){
 		fprintf(stderr,"\nServer noti:%s\n",payload);
+	}else if(req_response == RP_NFOUND){
+		fprintf(stderr,"\nServer noti:%s\n",payload);
+	}else if(req_response == RP_STREAM){
+		
 	}
 	return 1;
 }

@@ -53,6 +53,8 @@
 #define RP_NFOUND   0x0001 << 4
 //Response list client struct
 #define RP_FLIST    0x0001 << 5
+//Stick data stream continue transfer
+#define RP_STREAM   0x0001 << 6
 //Undefine method
 #define UNDEFINE    -1
 //Stick end of data stream
@@ -83,15 +85,72 @@ typedef enum _pack_position{
     PACK_PAYLOAD
 }PackPosition;
 
+/**
+ * Add request action to header of buffer stream
+ * @param buff pointer to buffer stram variable
+ * @param method value of constant method
+ * return void pointer
+ */ 
 void* add_request(char* buff,int method);
+
+/**
+ * Extract request action from buffer stream
+ * 
+ */
 int extract_request(char* buff);
+
+/**
+ * Attach payload stream to buffer stream
+ */
 void* attach_payload(char* buff,char* payload,unsigned int size);
+
+/**
+ * Detach payload stream from buffer stream
+ */
 char* detach_payload(char* buff);
+
+/**
+ * Detach payload stream from buffer stream
+ */
 int detach_payload2(char* buff,char* payload);
+
+/**
+ * Get real payload size from header of buffer stream 
+ */
 int get_payload_size(char* buff);
+
+/**
+ * Check valid method in role
+ */
 int valid_method(int method);
+
+/**
+ * Get real len of buffer stream, wrap all data 
+ */
 int get_real_len(char* buff);
+
+/**
+ * Convert string to enum method
+ */ 
 int stom(char* string_method);
-int mtos(Method method);
+
+/**
+ * Convert from enum method to string
+ */ 
+char* mtos(Method method);
+
+/**
+ * Print package info to command line screen
+ */ 
 void packet_info(char* buff);
+
+/**
+ * Add number of struct element in payload
+ */ 
+int add_response_number(char* buff, int number);
+
+/**
+ * Get number of struct element in payload
+ */ 
+int extract_response_number(char* buff);
 #endif
