@@ -210,7 +210,6 @@ int server_interac(char* buff, char* payload,int sockfd){
 
 	}else if(req_response == NOTI_INF){
 		fprintf(stderr,"\nServer noti:%s\n",payload);
-
 	}else if(req_response == RP_NFOUND){
 		fprintf(stderr,"\nServer noti:%s\n",payload);
 
