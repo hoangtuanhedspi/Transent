@@ -20,6 +20,7 @@
 #include <transent/tsfmanage.h>
 #define POLLS 2
 #define DATA_PATH "./db"
+#define FILE_PATH "./clientdb/"
 
 /* Check arguments is valid or not. If valid ip -> *serv_ip, port -> &serv_port */
 void validArguments (int argc, char *argv[], char *serv_ip, int *serv_port);
@@ -27,10 +28,10 @@ int local_interac(char* buff, char* payload, int sockfd);
 int server_interac(char* buff, char* payload, int sockfd);
 /* Check wanna exit */
 _Bool wannaExit (char *buff);
-void* send_file_handle(void* data);
 void sig_handler(int signum);
 
 Cache *arr;
+FILE* fin, * fout;
 
 int main(int argc, char *argv[]) {
 	int 	server_port = 0;
@@ -154,12 +155,18 @@ int local_interac(char* buff, char* payload, int sockfd){
 	}
 
 	if(method == SELECT){
-		int select = atoi(cmd->data);
-		memcpy(payload,arr+select,sizeof(Cache));
-		wrap_packet(buff,payload,sizeof(Cache),RQ_DL);
-		//add_meta_data(buff,arr[select].file_name);
-		msg_len = get_real_len(buff);
-		bytes_sent = send(sockfd, buff, msg_len, 0);
+		if(arr!=NULL){
+			int select = atoi(cmd->data);
+			memcpy(payload,arr+select,sizeof(Cache));
+			wrap_packet(buff,payload,sizeof(Cache),RQ_DL);
+			//add_meta_data(buff,arr[select].file_name);
+			msg_len = get_real_len(buff);
+			bytes_sent = send(sockfd, buff, msg_len, 0);
+			arr = NULL;
+		}else{
+			bytes_sent = 1;
+			printf("Error: Please enter find [file name] for select!\n");
+		}
 	}
 
 	if(bytes_sent <= 0){
@@ -219,29 +226,40 @@ int server_interac(char* buff, char* payload,int sockfd){
 
 	}else if(req_response == NOTI_INF){
 		fprintf(stderr,"\nServer noti:%s\n",payload);
-
 	}else if(req_response == RP_NFOUND){
 		fprintf(stderr,"\nServer noti:%s\n",payload);
-
 	}else if(req_response == RQ_DL){
-		pthread_t file_handle;
-		//Create file handle thread
 		Cache* cache = tsalloc(Cache,sizeof(Cache));
 		memcpy(cache,payload,sizeof(Cache));
 		printf("Request file %s from %s\n",cache->file_name,cache->uid_hash);
-    	///int status = pthread_create(&file_handle, NULL, &send_file_handle, pass_data);
-		//if (status != 0) {
-		//	printf("Failed to create timer thread with status = %d\n", status);
-		//	exit(EXIT_FAILURE);
-		//}
+		int len = strlen(FILE_PATH)+strlen(cache->file_name);
+    	char path[len];
+		bzero(path,len);
+		strcat(path,FILE_PATH);
+		strcat(path,cache->file_name);
+		printf("PATH:%s\n",path);
+		if(!fout)
+			fout = open(path,"rb");
+		if(fout!=NULL){
+			int rlen = fread(payload,sizeof(char),PAY_LEN,fout);
+			//wrap_packet(buff,payload,rlen,RP_STREAM);
+			//add_response_number(buff,atoi(cache->uid_hash));
+			//add_meta_data(buff,cache->file_name);
+			//msg_len = get_real_len(buff);
+			//msg_len = send(sockfd, buff, msg_len, 0);
+			//if(msg_len<0)
+				//return 0;
+			//if (rlen == 0)
+				//fclose(fout);
+			printf("Pass:%d\n",rlen);
+		}
+		
+	}else if(req_response == RQ_STREAM){
+		printf("File Name:%s\n",get_meta_data(buff));
+	}else if(req_response == RP_STREAM){
+	
 	}
 	return 1;
-}
-
-void* send_file_handle(void* data){
-	while(1){
-		printf("abcd\n");
-	}
 }
 
 void sig_handler(int signum) {
