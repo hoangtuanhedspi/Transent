@@ -392,7 +392,6 @@ Session* session;char* buff;char* payload;int paylen;
 
 void parseUserInfo (char *user_string, char *user_id, char *user_pass) {
 	char *flag = strchr(user_string, '@');
-
 	if (flag == NULL) {
 		strcpy(user_id, "");
 		strcpy(user_pass, "");
@@ -447,6 +446,7 @@ void validArguments (int argc, char *argv[], int *port) {
 void process_find_file(session,buff,payload,paylen)
 Session* session;char* buff;char* payload;int paylen;
 {
+	printf("on_%s\n",__func__);
 	int bytes_sent = -1;
 	if(session_size()>1){
 		Request* request = make_request(session,payload,DEFAULT_TIMEOUT);
@@ -457,7 +457,6 @@ Session* session;char* buff;char* payload;int paylen;
 		sent_to_others(session,buff);
 	}else{
 		bytes_sent = wrap_packet(buff,ERR_FNF,strlen(ERR_FNF),NOTI_INF);
-		packet_info(buff);
 		bytes_sent = send(session->connfd,buff, bytes_sent, 0);
 		if (bytes_sent < 0)
 			perror("\nError: ");
@@ -469,11 +468,8 @@ Session* session;char* buff;char* payload;int paylen;
 {
 	printf("on_%s\n",__func__);
 	Cache* cache = new_cache(payload,session->id);
-	packet_info(buff);
 	if(!cache_contain(cache_list,cache))
 		push_cache(cache_list,cache);
-	
-	printf("Cache size:%d\n",get_all_cache_size());
 	Request* req = make_request(session,"test.pdf",DEFAULT_TIMEOUT);
 	get_list_file(req,cache_list);
 }
@@ -489,16 +485,37 @@ Session* session;char* buff;char* payload;int paylen;
 void process_file_transfer(session,buff,payload,paylen)
 Session* session;char* buff;char* payload;int paylen;
 {
-	//printf("Transfer file\n");
+	printf("on_%s\n",__func__);
+	//RP_STREAM
+	int req_response = UNDEFINE, bytes_transfer = 0;
+	//Get meta data from header
+	char* file_name = get_meta_data(buff);
+	int uid = extract_response_number(buff);
+	char id[UID_HASH_LEN];
+	bzero(id,UID_HASH_LEN);
+	sprintf(id,"%d",uid);
+	Session * s = findSessionById(id,sessions,SESSIONS);
+	if(!s) printf("NULL\n");
+	add_response_number(buff,atoi(session->id));
+	add_request(buff,RP_STREAM);
+	bytes_transfer = get_real_len(buff);
+	bytes_transfer = send(s->connfd,buff, bytes_transfer, 0);
+	if (bytes_transfer < 0)
+		perror("\nError");
+}
+
+void process_file_received(session,buff,payload,paylen)
+Session* session;char* buff;char* payload;int paylen;
+{
+	printf("on_%s\n",__func__);
 	int req_response = UNDEFINE, bytes_transfer = 0;
 	char* file_name = get_meta_data(buff);
 	int uid = extract_response_number(buff);
 	char id[UID_HASH_LEN];
 	sprintf(id,"%d",uid);
-	printf("File:%s - id: %s",file_name,id);
 	Session * s = findSessionById(id,sessions,SESSIONS);
 	add_response_number(buff,atoi(session->id));
-	add_request(buff,RP_STREAM);
+	add_request(buff,RQ_STREAM);
 	bytes_transfer = get_real_len(buff);
 	bytes_transfer = send(s->connfd,buff, bytes_transfer, 0);
 	if (bytes_transfer < 0)
@@ -508,34 +525,19 @@ Session* session;char* buff;char* payload;int paylen;
 void process_file_download(session,buff,payload,paylen)
 Session* session;char* buff;char* payload;int paylen;
 {
+	printf("on_%s\n",__func__);
 	//Todo: Start download file
 	int bytes_sent = 0;
-	printf("Start download\n");
 	Cache* cache = tsalloc(Cache,sizeof(Cache));
 	memcpy(cache,payload,sizeof(Cache));
-	printf("File:%s|Des:%s->Source:%s\n",cache->file_name,session->id,cache->uid_hash);
 	Session* s = findSessionById(cache->uid_hash,sessions,SESSIONS);
 	strcpy(cache->uid_hash,session->id);
 	memcpy(payload,cache,sizeof(Cache));
 	wrap_packet(buff,payload,sizeof(Cache),RQ_DL);
-	packet_info(buff);
 	bytes_sent = get_real_len(buff);
 	bytes_sent = send(s->connfd,buff, bytes_sent, 0);
 	if (bytes_sent < 0)
 		perror("\nError");
-}
-
-void process_file_received(session,buff,payload,paylen)
-Session* session;char* buff;char* payload;int paylen;
-{
-	//Todo: Start download file
-	int bytes_sent = 0;
-	printf("Require next\n");
-	Cache* cache = tsalloc(Cache,sizeof(Cache));
-	memcpy(cache,payload,sizeof(Cache));
-	printf("File:%s|Des:%s->Source:%s\n",cache->file_name,session->id,cache->uid_hash);
-	Session* s = findSessionById(cache->uid_hash,sessions,SESSIONS);
-	
 }
 
 void sent_to_others(Session* session,char* buff){
@@ -624,10 +626,7 @@ int process_request(CacheList* list, Request* req){
 	bzero(buff,BUFF_SIZE);
 	int bytes_sent = 0;
 
-	printf("Timeout: %d\n",req->timeout);
-	//Timeout: Delete from queue, response not found!
 	if(req->timeout < 0) {
-		printf("Drop timeout: %d\n",req->timeout);
 		add_request(buff,RP_NFOUND);
 		bzero(payload,PAY_LEN);
 		sprintf(payload,"Can't find [%s] on any device!",req->file_name);
@@ -635,7 +634,7 @@ int process_request(CacheList* list, Request* req){
 		bytes_sent = get_real_len(buff);
 		bytes_sent = send(req->session->connfd,buff, bytes_sent, 0);
 		if(bytes_sent<=0){
-			printf("LOL\n");
+			perror("Error");
 		}
 		return 1;
 	}
@@ -652,7 +651,7 @@ int process_request(CacheList* list, Request* req){
 		bytes_sent = get_real_len(buff);
 		bytes_sent = send(req->session->connfd,buff, bytes_sent, 0);
 		if(bytes_sent<=0){
-			printf("LOL\n");
+			perror("Error");
 		}
 		return 1;
 	}
