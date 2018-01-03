@@ -1,8 +1,12 @@
 #include "../include/request.h"
 
 int compare_request(Var des,Var res){
-    //Todo: Fix compare session for duplicate file name
-    return strcmp(((Request*)des)->file_name,((Request*)res)->file_name) == 0;
+    if(!des || !res) return 0;
+    if(!((Request*)des)->session || !((Request*)res)->session) 
+        return strcmp(((Request*)des)->file_name,((Request*)res)->file_name) == 0;
+        
+    return strcmp(((Request*)des)->file_name,((Request*)res)->file_name) == 0 
+        && strcmp(((Request*)des)->session->id,((Request*)res)->session->id) == 0;
 }
 
 int drop_request(Queue** queue,Request* req){
@@ -19,6 +23,10 @@ Request* new_request_object(Session* session, char * file_name, int timeout){
     bzero(res->file_name,CFN_LEN);
     strcpy(res->file_name,file_name);
     return res;
+}
+
+int is_requested(Queue* req_queue,Request* request){
+    return find_data(req_queue,compare_request,request) != NULL;
 }
 
 Request* make_request(Session* session,char* file_name, int timeout){

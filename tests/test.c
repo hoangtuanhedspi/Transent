@@ -32,10 +32,10 @@ void test_command(int argc, char* argv[]);
 
 int main(int argc, char* argv[]){
     //test_directory(argc,argv);
-    test_interface(argc,argv);
+    //test_interface(argc,argv);
     //test_poll(argc,argv);
     //test_session(argc,argv);
-    //test_tsfmanage(argc,argv);
+    test_tsfmanage(argc,argv);
     //test_haihv(argc,argv);
     //test_command(argc,argv);
     return 0;
@@ -113,8 +113,12 @@ void test_tsfmanage(int argc, char* argv[]){
     printf("Sizeof one cache:%d\n",sizeof(Cache));
     init_cache_context(&list);
     Queue* queue = NULL;
+    Request *r = make_request(NULL,"abc",10);
     enqueue(&queue,make_request(NULL,"abc",10));
     enqueue(&queue,make_request(NULL,"def",10));
+    if(is_requested(queue,r)){
+        printf("Requested\n");
+    }
     printf("LOL:%s\n",((Request*)queue->data)->file_name);
     Cache* cache = new_cache("abc","def");
     assert(strcmp(cache->file_name,"abc")==0);

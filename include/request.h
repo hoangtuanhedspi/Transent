@@ -35,4 +35,8 @@ extern int drop_request(Queue** queue,Request* req);
  */
 extern Request* new_request_object(Session* session, char * file_name, int timeout);
 
+/**
+ * 
+ */
+int is_requested(Queue* req_queue,Request* request);
 #endif
