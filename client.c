@@ -21,13 +21,17 @@
 #define POLLS 2
 #define DATA_PATH "./db"
 
+typedef struct __pass{
+	Cache* cache;
+	int connfd;
+}PassArgs;
+
 /* Check arguments is valid or not. If valid ip -> *serv_ip, port -> &serv_port */
 void validArguments (int argc, char *argv[], char *serv_ip, int *serv_port);
 int local_interac(char* buff, char* payload, int sockfd);
 int server_interac(char* buff, char* payload, int sockfd);
 /* Check wanna exit */
 _Bool wannaExit (char *buff);
-void* send_file_handle(void* data);
 void sig_handler(int signum);
 
 Cache *arr;
@@ -136,12 +140,18 @@ int local_interac(char* buff, char* payload, int sockfd){
 	}
 
 	if(method == SELECT){
-		int select = atoi(cmd->data);
-		memcpy(payload,arr+select,sizeof(Cache));
-		wrap_packet(buff,payload,sizeof(Cache),RQ_DL);
-		//add_meta_data(buff,arr[select].file_name);
-		msg_len = get_real_len(buff);
-		bytes_sent = send(sockfd, buff, msg_len, 0);
+		if(arr!=NULL){
+			int select = atoi(cmd->data);
+			memcpy(payload,arr+select,sizeof(Cache));
+			wrap_packet(buff,payload,sizeof(Cache),RQ_DL);
+			//add_meta_data(buff,arr[select].file_name);
+			msg_len = get_real_len(buff);
+			bytes_sent = send(sockfd, buff, msg_len, 0);
+			arr = NULL;
+		}else{
+			bytes_sent = 1;
+			printf("Error: Please enter find [file name] for select!\n");
+		}
 	}
 
 	if(bytes_sent <= 0){
@@ -205,24 +215,16 @@ int server_interac(char* buff, char* payload,int sockfd){
 		fprintf(stderr,"\nServer noti:%s\n",payload);
 
 	}else if(req_response == RQ_DL){
-		pthread_t file_handle;
 		//Create file handle thread
+		PassArgs* args = tsalloc(PassArgs,1);
 		Cache* cache = tsalloc(Cache,sizeof(Cache));
+		args->cache = cache;
+		args->connfd = sockfd;
 		memcpy(cache,payload,sizeof(Cache));
 		printf("Request file %s from %s\n",cache->file_name,cache->uid_hash);
-    	///int status = pthread_create(&file_handle, NULL, &send_file_handle, pass_data);
-		//if (status != 0) {
-		//	printf("Failed to create timer thread with status = %d\n", status);
-		//	exit(EXIT_FAILURE);
-		//}
+    	
 	}
 	return 1;
-}
-
-void* send_file_handle(void* data){
-	while(1){
-		printf("abcd\n");
-	}
 }
 
 void sig_handler(int signum) {
