@@ -11,6 +11,8 @@
 
 #define DEBUG 1
 #include <transent/util.h>
+#include <transent/user.h>
+#include <transent/authen.h>
 #include <transent/session.h>
 #include <transent/mypoll.h>
 #include <transent/interface.h>
@@ -19,7 +21,9 @@
 
 #define BACKLOG 100  	 		/* Number of allowed connections */
 #define DATA_PATH "./db"
+#define USERS 100
 #define SESSIONS 1000
+#define USER_FILE "account.txt"
 
 #define ERR_FNF "Can't find any once client contain this file!"
 
@@ -92,6 +96,12 @@ void process_request_queue(CacheList* list, Queue** req);
  */
 int process_request(CacheList* list, Request* req);
 
+void processLogout(session, buff, payload, paylen);
+void processLogin (session, buff, payload, paylen);
+void parseUserInfo(char *user_string, char *user_id, char *user_pass);
+void sendMessage (int connfd, int method, char *buff, char *msg);
+
+User users[USERS];
 Session sessions[SESSIONS];
 Queue *req_queue = NULL;
 CacheList* cache_list = NULL;
@@ -99,6 +109,9 @@ CacheList* cache_list = NULL;
 pthread_t timeout;
 
 int main(int argc, char *argv[]) {
+	// Read list-user from file
+	readUsers(USER_FILE, users, USERS);
+
 	int port = 0;
 	int listenfd, *connfd;
 	struct sockaddr_in server;
@@ -235,8 +248,107 @@ void process(struct pollfd *po) {
 			process_file_transfer(ss,buff,payload,payload_size);
 		else if(req_method == RQ_STREAM)
 			process_file_transfer(ss,buff,payload,payload_size);
-		else	
+		else if(req_method == RQ_LOGIN)
+			processLogin(ss, buff, payload, payload_size);
+		else if(req_method == RQ_LOGOUT)
+			processLogout(ss, buff, payload, payload_size);
+		else
 			printf("None!\n");
+	}
+}
+
+void processLogout(session, buff, payload, paylen)
+Session* session;char* buff;char* payload;int paylen;
+{
+	char user_id[USER_ID_LEN + 1] = "";
+	char user_pass[PASS_LEN + 1] = "";
+
+	parseUserInfo(payload, user_id, user_pass);
+	printf("user = |%s|\n", user_id);
+	printf("pass = |%s|\n", user_pass);
+
+	enum LogoutState logout_state = logout(session->connfd, user_id, user_pass, sessions, SESSIONS, users, USERS);
+
+	switch (logout_state) {
+	case LO_SUCCESS:
+		sendMessage(session->connfd, RP_LOGOUT, buff, "Logout successful!");
+		break;
+	case LO_NOT_IDENTIFIED_USER:
+		sendMessage(session->connfd, RP_LOGOUT, buff, "Logout fail! Don't exist any user in session.");
+		break;
+	case LO_WRONG_USER:
+		sendMessage(session->connfd, RP_LOGOUT, buff, "Logout fail! UserID doesn't match.");
+		break;
+	case LO_WRONG_PASS:
+		sendMessage(session->connfd, RP_LOGOUT, buff, "Logout fail! Wrong password.");
+		break;
+	case LO_USER_BLOCKED:
+		sendMessage(session->connfd, RP_LOGOUT, buff, "Logout fail! User was blocked.");
+		break;
+	default:
+		sendMessage(session->connfd, RP_LOGOUT, buff, "Logout fail! Something wrong.");
+	}
+}
+
+void processLogin (session, buff, payload, paylen)
+Session* session;char* buff;char* payload;int paylen;
+{
+	char user_id[USER_ID_LEN + 1] = "";
+	char user_pass[PASS_LEN + 1] = "";
+
+	parseUserInfo(payload, user_id, user_pass);
+	printf("user = |%s|\n", user_id);
+	printf("pass = |%s|\n", user_pass);
+
+	enum LoginUserState login_user_state = loginUser(session->connfd, user_id, sessions, SESSIONS, users, USERS);
+
+	switch (login_user_state) {
+	case LU_SUCCESS: {
+		enum LoginPassState login_pass_state = loginPass(session->connfd, user_pass, sessions, SESSIONS, users, USERS);
+
+		if (login_pass_state == LP_SUCCESS) {
+			// Login success
+			sendMessage(session->connfd, RP_LOGIN, buff, "Login successful!");
+		} else {
+			// Wrong pass
+			sendMessage(session->connfd, RP_LOGIN, buff, "Login fail. Password is wrong.");
+			removeUserFromSession(session);
+		}
+		break;
+	}
+	case LU_EXISTED_ONE_USER:
+		sendMessage(session->connfd, RP_LOGIN, buff, "Login fail. Existed another user.");
+		break;
+	case LU_USER_BLOCKED:
+		sendMessage(session->connfd, RP_LOGIN, buff, "Login fail. User is blocked.");
+		break;
+	case LU_NOT_FOUND:
+		sendMessage(session->connfd, RP_LOGIN, buff, "Login fail. User not found.");
+	default:
+		sendMessage(session->connfd, RP_LOGIN, buff, "Login fail. Something wrong.");
+	}
+
+	printf("Session state: %d\n", session->state);
+}
+
+void parseUserInfo (char *user_string, char *user_id, char *user_pass) {
+	char *flag = strchr(user_string, '@');
+
+	strncpy(user_id, user_string, flag - user_string);
+	strcpy(user_pass, flag + 1);
+}
+
+void sendMessage (int connfd, int method, char *buff, char *msg) {
+	add_request(buff, method);
+	attach_payload(buff, msg, strlen(msg));
+
+	packet_info(buff);
+
+	int msg_len = get_real_len(buff);
+	int bytes_sent = send(connfd, buff, msg_len, 0);
+	if(bytes_sent <= 0){
+		printf("\nConnection closed!\n");
+		return 0;
 	}
 }
 

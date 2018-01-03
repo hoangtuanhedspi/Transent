@@ -40,27 +40,35 @@
 //Size of data stream buffer
 #define BUFF_SIZE   (PAY_LEN+HEADER_LEN+MD_LEN)
 
-//! Request method info stored on HEADER of data stream 
-//Request file method
-#define RQ_FILE     0x0001
-//Request file failed
-#define RQ_FAIL     0x0001 << 1
-//Request download file
-#define RQ_DL       0x0001 << 2
-//Stick data stream continue 
-//reading
-#define RQ_STREAM   0x0001 << 3
-//Response file was found
-#define RP_FOUND    0x0001 << 4
-//Response file not found
-#define RP_NFOUND   0x0001 << 5
-//Response list client struct
-#define RP_FLIST    0x0001 << 6
-//Stick data stream continue
-//transferring
-#define RP_STREAM   0x0001 << 7
-//Notify infor
-#define NOTI_INF    0x0001 << 8
+//! Request method info stored on HEADER of data stream
+enum {
+    //Request file method
+    RQ_FILE = 1,
+    //Request file failed
+    RQ_FAIL,
+    //Request download file
+    RQ_DL,
+    //Stick data stream continue 
+    //reading
+    RQ_STREAM,
+    //Response file was found
+    RP_FOUND,
+    //Response file not found
+    RP_NFOUND,
+    //Response list client struct
+    RP_FLIST,
+    //Stick data stream continue
+    //transferring
+    RP_STREAM,
+    //Notify infor
+    NOTI_INF,
+
+    RQ_LOGIN,
+    RP_LOGIN,
+    RQ_LOGOUT,
+    RP_LOGOUT
+};
+
 //Undefine method
 #define UNDEFINE    -1
 //Stick end of data stream

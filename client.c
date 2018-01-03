@@ -127,6 +127,22 @@ int local_interac(char* buff, char* payload, int sockfd){
 		exit(1);
 	}
 
+	if (method == LOGIN) {
+		add_request(buff, RQ_LOGIN);
+		attach_payload(buff,cmd->data,strlen(cmd->data));
+		packet_info(buff);
+		msg_len = get_real_len(buff);
+		bytes_sent = send(sockfd, buff, msg_len, 0);
+	}
+
+	if (method == LOGOUT) {
+		add_request(buff, RQ_LOGOUT);
+		attach_payload(buff,cmd->data,strlen(cmd->data));
+		packet_info(buff);
+		msg_len = get_real_len(buff);
+		bytes_sent = send(sockfd, buff, msg_len, 0);
+	}
+
 	if(method == FIND){
 		add_request(buff,RQ_FILE);
 		attach_payload(buff,cmd->data,strlen(cmd->data));
@@ -167,9 +183,13 @@ int server_interac(char* buff, char* payload,int sockfd){
 	}
 
 	req_response = parse_packet(buff,payload,&bytes_transfer);
-	printf("Response:%d\n",req_response);
-	if(req_response == RQ_FILE){
+	printf("Response: %d\n", req_response);
 
+	if (req_response == RP_LOGIN) {
+		printf("\n- Response: |%s|", (char *)payload);
+	} else if (req_response == RP_LOGOUT) {
+		printf("\n- Response: |%s|", (char *)payload);
+	} else if(req_response == RQ_FILE){
 		char* filename = detach_payload(buff);
 		if(existFile(DATA_PATH,filename)){
 			add_request(buff,RP_FOUND);
