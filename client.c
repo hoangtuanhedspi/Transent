@@ -25,6 +25,8 @@ int server_interac(char* buff, char* payload, int sockfd);
 /* Check wanna exit */
 _Bool wannaExit (char *buff);
 
+Cache *arr;
+
 int main(int argc, char *argv[]) {
 	int 	server_port = 0;
 	int 	revents = -1;
@@ -127,6 +129,15 @@ int local_interac(char* buff, char* payload, int sockfd){
 		bytes_sent = send(sockfd, buff, msg_len, 0);
 	}
 
+	if(method == SELECT){
+		int select = atoi(cmd->data);
+		memcpy(payload,arr+select,sizeof(Cache));
+		wrap_packet(buff,payload,sizeof(Cache),RQ_DL);
+		add_meta_data(buff,arr[select].file_name);
+		msg_len = get_real_len(buff);
+		bytes_sent = send(sockfd, buff, msg_len, 0);
+	}
+
 	if(bytes_sent <= 0){
 		printf("\nConnection closed!\n");
 		return 0;
@@ -143,14 +154,16 @@ int server_interac(char* buff, char* payload,int sockfd){
 	bzero(buff,BUFF_SIZE);
 
 	bytes_transfer = recv(sockfd, buff, BUFF_SIZE-1, 0);
+
 	if(bytes_transfer <= 0){
 		printf("\nError!Cannot receive data from sever!\n");
 		return 0;
 	}
 
 	req_response = parse_packet(buff,payload,&bytes_transfer);
-	printf("on_%s\n",__func__);
+
 	if(req_response == RQ_FILE){
+
 		char* filename = detach_payload(buff);
 		if(existFile(DATA_PATH,filename)){
 			add_request(buff,RP_FOUND);
@@ -166,10 +179,29 @@ int server_interac(char* buff, char* payload,int sockfd){
 				return 0;
 		}
 		free(filename);
+
 	}else if(req_response == RP_FLIST){
-		
+
+		int number = extract_response_number(buff);
+		arr = tsalloc(Cache,number);
+		bzero(arr,number*sizeof(Cache));
+		memcpy(arr,payload,number*sizeof(Cache));
+		printf("Select:\n");
+
+		for(int i = 0;i<number;i++)
+			printf("Client ID: %2s | File name: %20s\n",
+						arr[i].uid_hash,arr[i].file_name);
+
 	}else if(req_response == NOTI_INF){
-		fprintf(stderr,"\nServer noti:%s\n",payload);
+		printf("\nServer noti:%s\n",payload);
+
+	}else if(req_response == RP_NFOUND){
+		printf("\nServer noti:%s\n",payload);
+
+	}else if(req_response == RP_STREAM){
+		
+	}else if(req_response == RQ_DL){
+		printf("Start file stream\n");
 	}
 	return 1;
 }

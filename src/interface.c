@@ -31,10 +31,12 @@ struct {
     {STUP,"So stupid"},
     {LOGIN,"LOGIN"},
     {LOGOUT,"LOGOUT"},
-    {FIND,"FIND"}
+    {FIND,"FIND"},
+    {SELECT,"SELECT"}
 };
 
 int pack(int at);
+
 void* add_request(char* buff,int method){
     bzero(buff,HEADER_LEN);
     return memcpy(buff+pack(PACK_METHOD),&method,PACK_SIZE);
@@ -46,35 +48,58 @@ int pack(int at){
     return PACK_SIZE*at;
 }
 
+void* add_meta_data(char* buff, char* meta){
+    bzero(buff + HEADER_LEN,MD_LEN);
+    return memcpy(buff+HEADER_LEN,meta,MD_LEN);
+}
+
+char* get_meta_data(char* buff){
+    char* meta = tsalloc(char,MD_LEN);
+    bzero(meta,MD_LEN);
+    memcpy(meta,buff+HEADER_LEN,MD_LEN);
+    return meta;
+}
+
 int extract_request(char* buff){
     int req = UNDEFINE;
     memcpy(&req,buff+pack(PACK_METHOD),PACK_SIZE);
     return req;
 }
 
+int add_response_number(char* buff, int number){
+    memcpy(buff+pack(PACK_WIDEN),&number,PACK_SIZE);
+    return number;
+}
+
+int extract_response_number(char* buff){
+    int req = UNDEFINE;
+    memcpy(&req,buff+pack(PACK_WIDEN),PACK_SIZE);
+    return req;
+}
+
 void* attach_payload(char* buff,char* payload,unsigned int size){
-    bzero(buff+HEADER_LEN,PAY_LEN);
+    bzero(buff+HEADER_LEN+MD_LEN,PAY_LEN);
     memcpy(buff+pack(PACK_PAYSIZE),&size,PACK_SIZE);
-    return memcpy(buff+HEADER_LEN,payload,size);
+    return memcpy(buff+HEADER_LEN+MD_LEN,payload,size);
 }
 
 char* detach_payload(char* buff){
     char* payload = NULL;
     payload = tsalloc(char,PAY_LEN);
     bzero(payload,PAY_LEN);
-    memcpy(payload,buff+HEADER_LEN,PAY_LEN);
+    memcpy(payload,buff+HEADER_LEN+MD_LEN,PAY_LEN);
     return payload;
 }
 
 int detach_payload2(char* buff,char* payload){
     bzero(payload,PAY_LEN);
-    memcpy(payload,buff+HEADER_LEN,PAY_LEN);
+    memcpy(payload,buff+HEADER_LEN+MD_LEN,PAY_LEN);
     return get_payload_size(buff);
 }
 
 int get_real_len(char* buff){
     int len = 0;
-    len += HEADER_LEN + get_payload_size(buff);
+    len += HEADER_LEN + MD_LEN + get_payload_size(buff);
     return len;
 }
 
@@ -103,8 +128,8 @@ int stom(char* string_method){
     return UNDEFINE;
 }
 
-int mtos(Method method){
-    return c_method[method].method;
+char* mtos(Method method){
+    return c_method[method].string;
 }
 
 void packet_info(char* buff){

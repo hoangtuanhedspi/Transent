@@ -80,6 +80,14 @@ Var get_data(Node *node){
   return !node ? NULL : node->data;
 }
 
+Var clone_data(Node* node){
+  if(!node) return NULL;
+  if(!node->data) return NULL;
+  Var res = malloc(sizeof(node->data));
+  memcpy(res,node->data,sizeof(node->data));
+  return res;
+}
+
 void set_data(Node *node, Var data){
   if (!node) return;
   node->data = data;
