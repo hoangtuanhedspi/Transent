@@ -1,6 +1,7 @@
 build
 bin
 test
+stest
 client
 server
 *.o

@@ -60,6 +60,11 @@ void process_file_transfer(session,buff,payload,paylen);
 /**
  * 
  */
+void process_file_received(session,buff,payload,paylen);
+
+/**
+ * 
+ */
 void process_file_not_found(session,buff,payload,paylen);
 
 /**
@@ -234,7 +239,7 @@ void process(struct pollfd *po) {
 		else if(req_method == RP_STREAM)
 			process_file_transfer(ss,buff,payload,payload_size);
 		else if(req_method == RQ_STREAM)
-			process_file_transfer(ss,buff,payload,payload_size);
+			process_file_received(ss,buff,payload,payload_size);
 		else	
 			printf("None!\n");
 	}
@@ -281,6 +286,7 @@ Session* session;char* buff;char* payload;int paylen;
 		sent_to_others(session,buff);
 	}else{
 		bytes_sent = wrap_packet(buff,ERR_FNF,strlen(ERR_FNF),NOTI_INF);
+		packet_info(buff);
 		bytes_sent = send(session->connfd,buff, bytes_sent, 0);
 		if (bytes_sent < 0)
 			perror("\nError: ");
@@ -320,6 +326,12 @@ Session* session;char* buff;char* payload;int paylen;
 	sprintf(id,"%d",uid);
 	printf("File:%s - id: %s",file_name,id);
 	Session * s = findSessionById(id,sessions,SESSIONS);
+	add_response_number(buff,atoi(session->id));
+	add_request(buff,RP_STREAM);
+	bytes_transfer = get_real_len(buff);
+	bytes_transfer = send(s->connfd,buff, bytes_transfer, 0);
+	if (bytes_transfer < 0)
+		perror("\nError");
 }
 
 void process_file_download(session,buff,payload,paylen)
@@ -340,6 +352,19 @@ Session* session;char* buff;char* payload;int paylen;
 	bytes_sent = send(s->connfd,buff, bytes_sent, 0);
 	if (bytes_sent < 0)
 		perror("\nError");
+}
+
+void process_file_received(session,buff,payload,paylen)
+Session* session;char* buff;char* payload;int paylen;
+{
+	//Todo: Start download file
+	int bytes_sent = 0;
+	printf("Require next\n");
+	Cache* cache = tsalloc(Cache,sizeof(Cache));
+	memcpy(cache,payload,sizeof(Cache));
+	printf("File:%s|Des:%s->Source:%s\n",cache->file_name,session->id,cache->uid_hash);
+	Session* s = findSessionById(cache->uid_hash,sessions,SESSIONS);
+	
 }
 
 void sent_to_others(Session* session,char* buff){
