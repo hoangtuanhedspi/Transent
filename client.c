@@ -133,7 +133,7 @@ int local_interac(char* buff, char* payload, int sockfd){
 		int select = atoi(cmd->data);
 		memcpy(payload,arr+select,sizeof(Cache));
 		wrap_packet(buff,payload,sizeof(Cache),RQ_DL);
-		add_meta_data(buff,arr[select].file_name);
+		//add_meta_data(buff,arr[select].file_name);
 		msg_len = get_real_len(buff);
 		bytes_sent = send(sockfd, buff, msg_len, 0);
 	}

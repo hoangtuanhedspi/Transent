@@ -325,7 +325,8 @@ Session* session;char* buff;char* payload;int paylen;
 	printf("File:%s|Des:%s->Source:%s\n",s->file_name,session->id,s->uid_hash);
 	add_request(buff,RQ_DL);
 	attach_payload(buff,s->file_name,strlen(s->file_name));
-	bytes_sent = send(atoi(s->uid_hash),buff, bytes_sent, 0);
+	Session* s = findSessionById(s->uid_hash)
+	bytes_sent = send(s->connfd,buff, bytes_sent, 0);
 	if (bytes_sent < 0)
 		perror("\nError: ");
 }
