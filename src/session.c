@@ -145,7 +145,7 @@ Session *findSessionByConnfd (int connfd, Session sessions[], int max_sessions) 
     return NULL;
 }
 
-Session *findSessionById(char* id) {
+Session *findSessionById(char* id, Session sessions[], int max_sessions) {
     for (int i = 0; i < max_sessions; i++) {
         if (sessions[i].connfd != -1 && strcmpy(sessions[i].id,id) == 0)
             return (sessions + i);

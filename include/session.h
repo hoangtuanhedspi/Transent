@@ -32,7 +32,7 @@ _Bool removeSession (char *sessionId, Session sessions[], int max_sessions);
 _Bool newSession (struct sockaddr_in *cliaddr, int connfd, Session sessions[], int max_sessions);
 _Bool removeUserFromSession (Session *session);
 Session *findSessionByConnfd (int connfd, Session sessions[], int max_sessions);
-Session *findSessionById(char* id);
+Session *findSessionById(char* id, Session sessions[], int max_sessions);
 int indexOfSession (char *sessionId, Session sessions[], int max_sessions);
 int indexOfEmptySession (Session sessions[], int max_sessions);
 void initSessions (Session sessions[], int max_sessions);
