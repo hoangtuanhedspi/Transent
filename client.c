@@ -66,7 +66,9 @@ int main(int argc, char *argv[]) {
 		return 0;
 	}
 
-	fprintf(stderr,"Enter command:");
+	// Welcome
+	fprintf(stderr, "-- Welcome to Transent --\n\n");
+
 	while(1){
 		revents = poll(polls, POLLS, 40000);
 		if (revents > 0) {
@@ -74,7 +76,8 @@ int main(int argc, char *argv[]) {
 				res = local_interac(buff,payload,client_sock);
 			if (polls[1].revents & POLLIN)
 				res = server_interac(buff,payload,client_sock);
-			if(res==0) break;
+
+			if(res == 0) break;
 		}
 	}
 	end_process:
@@ -120,26 +123,53 @@ int local_interac(char* buff, char* payload, int sockfd){
 	int	bytes_sent 	= 0,
 		msg_len 	= 0;
 
-	printf("Enter command:");
 	bzero(payload,PAY_LEN);
 	scanf("%[^\n]",payload);
 	while(getchar()!='\n');
 	cmd = parse_cmd(payload);
 	method = valid_cmd(*cmd);
 
-	if(method == UNDEFINE){
-		loginfo("METHOD:%d\n",method);
-		exit(1);
-	}
+	switch (method) {
+	case UNDEFINE:
+		printf("\x1B[31m=> Command not found! Please try \'SIGNUP, LOGIN, LOGOUT, FIND\'.\x1B[0m\n\n");
+		return;
 
-	if(method == FIND){
+	case EXIT:
+		printf("\x1B[31m=> Exit program!\x1B[0m\n\n");
+		exit(0);
+
+	case SIGNUP:
+		add_request(buff, RQ_SIGNUP);
+		attach_payload(buff,cmd->data,strlen(cmd->data));
+		// packet_info(buff);
+		msg_len = get_real_len(buff);
+		bytes_sent = send(sockfd, buff, msg_len, 0);
+		break;
+
+	case LOGIN:
+		add_request(buff, RQ_LOGIN);
+		attach_payload(buff,cmd->data,strlen(cmd->data));
+		// packet_info(buff);
+		msg_len = get_real_len(buff);
+		bytes_sent = send(sockfd, buff, msg_len, 0);
+		break;
+
+	case LOGOUT:
+		add_request(buff, RQ_LOGOUT);
+		attach_payload(buff,cmd->data,strlen(cmd->data));
+		// packet_info(buff);
+		msg_len = get_real_len(buff);
+		bytes_sent = send(sockfd, buff, msg_len, 0);
+		break;
+
+	case FIND:
 		add_request(buff,RQ_FILE);
 		attach_payload(buff,cmd->data,strlen(cmd->data));
 		msg_len = get_real_len(buff);
 		bytes_sent = send(sockfd, buff, msg_len, 0);
-	}
+		break;
 
-	if(method == SELECT){
+	case SELECT:
 		if(arr!=NULL){
 			int select = atoi(cmd->data);
 			memcpy(payload,arr+select,sizeof(Cache));
@@ -151,6 +181,7 @@ int local_interac(char* buff, char* payload, int sockfd){
 			bytes_sent = 1;
 			printf("Error: Please enter find [file name] for select!\n");
 		}
+		break;
 	}
 
 	if(bytes_sent <= 0){
@@ -176,9 +207,10 @@ int server_interac(char* buff, char* payload,int sockfd){
 	}
 
 	req_response = parse_packet(buff,payload,&bytes_transfer);
-	
-	if(req_response == RQ_FILE){
-		printf("RQ_FILE\n");
+
+	if (req_response == RP_MSG) {
+		printf("%s\n\n", (char *)payload);
+	} else if(req_response == RQ_FILE){
 		char* filename = detach_payload(buff);
 		if(existFile(DATA_PATH,filename)){
 			add_request(buff,RP_FOUND);
@@ -306,7 +338,6 @@ void sig_handler(int signum) {
 }
 
 int fd_set_blocking(int fd, int blocking) {
-    /* Save the current flags */
     int flags = fcntl(fd, F_GETFL, 0);
     if (flags == -1)
         return 0;

@@ -29,10 +29,12 @@ struct {
     char string[CMETHOD_LEN + 1];
 } c_method[METHOD_COUNT] = {
     {STUP,"So stupid"},
+    {SIGNUP,"SIGNUP"},
     {LOGIN,"LOGIN"},
     {LOGOUT,"LOGOUT"},
     {FIND,"FIND"},
-    {SELECT,"SELECT"}
+    {SELECT,"SELECT"},
+    {EXIT,"EXIT"}
 };
 
 int pack(int at);

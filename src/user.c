@@ -1,5 +1,35 @@
 #include "../include/user.h"
 
+User *createUser (char *id, char *pass) {
+    User *user = (User *) malloc(sizeof(User));
+
+    strncpy(user->id, id, USER_ID_LEN);
+    strncpy(user->pass, pass, PASS_LEN);
+    user->state = ACTIVE;
+
+    return user;
+}
+
+enum NewUserState newUser (User *user, User users[], int max_users) {
+    if (findUserById(user->id, users, max_users) != NULL) {
+        // Existed user
+        return EXISTED;
+    } else {
+        for (int i = 0; i < max_users; i++) {
+            if (users[i].id[0] == '\0') {
+                strcpy(users[i].id, user->id);
+                strcpy(users[i].pass, user->pass);
+                users[i].state = user->state;
+
+                free(user);
+                return SUCCESS;
+            }
+        }
+
+        return FULL;
+    }
+}
+
 User *findUserById (char *id, User users[], int max_users) {
     for (int i = 0; i < max_users; i++) {
         if (!strcmp(users[i].id, id))       // Found user
