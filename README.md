@@ -29,4 +29,7 @@ LOGIN user@password
 LOGOUT user@password
 
 # Find file
+
+# Exit
+EXIT
 ```
