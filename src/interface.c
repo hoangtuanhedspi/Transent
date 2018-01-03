@@ -135,9 +135,12 @@ char* mtos(Method method){
 void packet_info(char* buff){
     printf("\nPackage contain %d byte\n\
     method:%d\n\
+    metadata:%s\n\
     payload:%s\n\
-    payload_size:%dbyte\n",get_real_len(buff),
+    payload_size:%dbyte\n",
+    get_real_len(buff),
     extract_request(buff),
+    get_meta_data(buff),
     detach_payload(buff),
     get_payload_size(buff));
 }

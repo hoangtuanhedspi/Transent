@@ -144,7 +144,6 @@ int remove_data(Node **list,
 			root = &((*root)->next);
 		}
   }
-
   return position;
 }
 

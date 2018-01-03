@@ -46,23 +46,25 @@
 //Request file failed
 #define RQ_FAIL     0x0001 << 1
 //Request download file
-#define RQ_DL       0x0001 << 6
-//Notify infor
-#define NOTI_INF    0x0001 << 2
+#define RQ_DL       0x0001 << 2
+//Stick data stream continue 
+//reading
+#define RQ_STREAM   0x0001 << 3
 //Response file was found
-#define RP_FOUND    0x0001 << 3
+#define RP_FOUND    0x0001 << 4
 //Response file not found
-#define RP_NFOUND   0x0001 << 4
+#define RP_NFOUND   0x0001 << 5
 //Response list client struct
-#define RP_FLIST    0x0001 << 5
-//Stick data stream continue transfer
-#define RP_STREAM   0x0001 << 6
+#define RP_FLIST    0x0001 << 6
+//Stick data stream continue
+//transferring
+#define RP_STREAM   0x0001 << 7
+//Notify infor
+#define NOTI_INF    0x0001 << 8
 //Undefine method
 #define UNDEFINE    -1
 //Stick end of data stream
 #define EOF_FILE    0
-//Stick data stream continue transfer
-#define FSTREAM     1
 //Length of strig method
 #define CMETHOD_LEN 10
 #define METHOD_COUNT 5

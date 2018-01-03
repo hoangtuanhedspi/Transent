@@ -25,11 +25,17 @@
 #include "interface.h"
 #define CFN_LEN 94
 #define UID_HASH_LEN ((BUFF_SIZE-HEADER_LEN)/24 - CFN_LEN)
+#define CACHE_LIFE_TIME 30
 
 typedef struct _cache{
     char file_name[CFN_LEN];
     char uid_hash[UID_HASH_LEN];
 }Cache;
+
+typedef struct _local_cache{
+    Cache* cache;
+    int life_time;
+}LocalCache;
 
 typedef Node CacheList;
 
@@ -68,4 +74,5 @@ extern int cache_contain(CacheList * list,Cache * cache);
 
 extern Cache* list_cache_to_array(CacheList* list);
 
+LocalCache * new_local_cache(Cache* cache,int timeout);
 #endif
