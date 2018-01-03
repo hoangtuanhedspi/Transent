@@ -6,6 +6,7 @@
 #include <string.h>
 #include <netinet/in.h>
 #include "user.h"
+#include "util.h"
 
 #define ID_LEN 10
 #define MAX_NO_LOGIN_FAIL 5
