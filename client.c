@@ -125,36 +125,48 @@ int local_interac(char* buff, char* payload, int sockfd){
 	cmd = parse_cmd(payload);
 	method = valid_cmd(*cmd);
 
-	if(method == UNDEFINE){
-		printf("\x1B[31m=> Command not found! Please try \'LOGIN, LOGOUT, FIND\'.\x1B[0m\n\n");
+	switch (method) {
+	case UNDEFINE:
+		printf("\x1B[31m=> Command not found! Please try \'SIGNUP, LOGIN, LOGOUT, FIND\'.\x1B[0m\n\n");
 		return;
-	}
 
-	if (method == LOGIN) {
+	case EXIT:
+		printf("\x1B[31m=> Exit program!\x1B[0m\n\n");
+		exit(0);
+
+	case SIGNUP:
+		add_request(buff, RQ_SIGNUP);
+		attach_payload(buff,cmd->data,strlen(cmd->data));
+		// packet_info(buff);
+		msg_len = get_real_len(buff);
+		bytes_sent = send(sockfd, buff, msg_len, 0);
+		break;
+
+	case LOGIN:
 		add_request(buff, RQ_LOGIN);
 		attach_payload(buff,cmd->data,strlen(cmd->data));
 		// packet_info(buff);
 		msg_len = get_real_len(buff);
 		bytes_sent = send(sockfd, buff, msg_len, 0);
-	}
+		break;
 
-	if (method == LOGOUT) {
+	case LOGOUT:
 		add_request(buff, RQ_LOGOUT);
 		attach_payload(buff,cmd->data,strlen(cmd->data));
 		// packet_info(buff);
 		msg_len = get_real_len(buff);
 		bytes_sent = send(sockfd, buff, msg_len, 0);
-	}
+		break;
 
-	if(method == FIND){
+	case FIND:
 		add_request(buff,RQ_FILE);
 		attach_payload(buff,cmd->data,strlen(cmd->data));
 		packet_info(buff);
 		msg_len = get_real_len(buff);
 		bytes_sent = send(sockfd, buff, msg_len, 0);
-	}
+		break;
 
-	if(method == SELECT){
+	case SELECT:
 		if(arr!=NULL){
 			int select = atoi(cmd->data);
 			memcpy(payload,arr+select,sizeof(Cache));
@@ -167,6 +179,7 @@ int local_interac(char* buff, char* payload, int sockfd){
 			bytes_sent = 1;
 			printf("Error: Please enter find [file name] for select!\n");
 		}
+		break;
 	}
 
 	if(bytes_sent <= 0){

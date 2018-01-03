@@ -63,6 +63,7 @@ enum {
     //Notify infor
     NOTI_INF,
 
+    RQ_SIGNUP,
     RQ_LOGIN,
     RQ_LOGOUT,
 
@@ -75,15 +76,17 @@ enum {
 #define EOF_FILE    0
 //Length of strig method
 #define CMETHOD_LEN 10
-#define METHOD_COUNT 5
+#define METHOD_COUNT 7
 
 //ennumeric user request method
 typedef enum __method{
     STUP,
+    SIGNUP,
     LOGIN,
     LOGOUT,
     FIND,
-    SELECT
+    SELECT,
+    EXIT
 }Method;
 
 /**
