@@ -312,7 +312,14 @@ Session* session;char* buff;char* payload;int paylen;
 void process_file_transfer(session,buff,payload,paylen)
 Session* session;char* buff;char* payload;int paylen;
 {
-	//Todo: Transfer thread
+	//printf("Transfer file\n");
+	int req_response = UNDEFINE, bytes_transfer = 0;
+	char* file_name = get_meta_data(buff);
+	int uid = extract_response_number(buff);
+	char id[UID_HASH_LEN];
+	sprintf(id,"%d",uid);
+	printf("File:%s - id: %s",file_name,id);
+	Session * s = findSessionById(id,sessions,SESSIONS);
 }
 
 void process_file_download(session,buff,payload,paylen)
@@ -436,7 +443,7 @@ int process_request(CacheList* list, Request* req){
 		}
 		return 1;
 	}
-	
+
 	//In time
 	CacheList* smlist = get_list_file(req,list);
 	int len = length(smlist);
