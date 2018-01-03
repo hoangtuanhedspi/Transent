@@ -31,12 +31,14 @@
 #define PACK_COUNT  3
 //Size for each packet
 #define PACK_SIZE   4
+//Size of meta data
+#define MD_LEN 100
 //Header len cal
-#define HEADER_LEN  (PACK_SIZE*PACK_COUNT)
+#define HEADER_LEN  (PACK_SIZE*PACK_COUNT+MD_LEN)
 //Payload len
 #define PAY_LEN     3072
 //Size of data stream buffer
-#define BUFF_SIZE   (PAY_LEN+HEADER_LEN)
+#define BUFF_SIZE   (PAY_LEN+HEADER_LEN+MD_LEN)
 
 //! Request method info stored on HEADER of data stream 
 //Request file method
@@ -63,13 +65,15 @@
 #define FSTREAM     1
 //Length of strig method
 #define CMETHOD_LEN 10
-#define METHOD_COUNT 4
+#define METHOD_COUNT 5
+
 //ennumeric user request method
 typedef enum __method{
     STUP,
     LOGIN,
     LOGOUT,
-    FIND
+    FIND,
+    SELECT
 }Method;
 
 /**
@@ -153,4 +157,14 @@ int add_response_number(char* buff, int number);
  * Get number of struct element in payload
  */ 
 int extract_response_number(char* buff);
+
+/**
+ * 
+ */
+void* add_meta_data(char* buff, char* meta);
+
+/**
+ * 
+ */
+char* get_meta_data(char* buff);
 #endif
