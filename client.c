@@ -125,6 +125,7 @@ int local_interac(char* buff, char* payload, int sockfd){
 	if(method == FIND){
 		add_request(buff,RQ_FILE);
 		attach_payload(buff,cmd->data,strlen(cmd->data));
+		packet_info(buff);
 		msg_len = get_real_len(buff);
 		bytes_sent = send(sockfd, buff, msg_len, 0);
 	}
@@ -161,7 +162,7 @@ int server_interac(char* buff, char* payload,int sockfd){
 	}
 
 	req_response = parse_packet(buff,payload,&bytes_transfer);
-
+	printf("Response:%d\n",req_response);
 	if(req_response == RQ_FILE){
 
 		char* filename = detach_payload(buff);
@@ -193,15 +194,15 @@ int server_interac(char* buff, char* payload,int sockfd){
 						arr[i].uid_hash,arr[i].file_name);
 
 	}else if(req_response == NOTI_INF){
-		printf("\nServer noti:%s\n",payload);
+		fprintf(stderr,"\nServer noti:%s\n",payload);
 
 	}else if(req_response == RP_NFOUND){
-		printf("\nServer noti:%s\n",payload);
+		fprintf(stderr,"\nServer noti:%s\n",payload);
 
 	}else if(req_response == RP_STREAM){
 		
 	}else if(req_response == RQ_DL){
-		printf("Start file stream\n");
+		fprintf(stderr,"Start file stream\n");
 	}
 	return 1;
 }

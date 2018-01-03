@@ -55,6 +55,7 @@ void test_interface(int argc, char* argv[]){
     assert(i==RP_STREAM);
     attach_payload(buff,"Hello",5);
     add_meta_data(buff,"test.pdf");
+    packet_info(buff);
     assert(strcmp(get_meta_data(buff),"test.pdf")==0);
     char* pl = detach_payload(buff);
     int j = 0;
