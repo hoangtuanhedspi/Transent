@@ -101,8 +101,9 @@ void process_request_queue(CacheList* list, Queue** req);
  */
 int process_request(CacheList* list, Request* req);
 
-void processLogout(session, buff, payload, paylen);
+void processSignup (session, buff, payload, paylen);
 void processLogin (session, buff, payload, paylen);
+void processLogout(session, buff, payload, paylen);
 void parseUserInfo(char *user_string, char *user_id, char *user_pass);
 void sendMessage (int connfd, int method, char *buff, char *msg);
 
@@ -238,27 +239,73 @@ void process(struct pollfd *po) {
 		closeConnection(po, ss);
 	} else if (bytes_received == 0) {
 		printf("Connection closed.\n");
+		writeUsers(USER_FILE, users, USERS);
 		closeConnection(po, ss);
 	} else {
 		req_method = parse_packet(buff,payload,&payload_size);
-		if(req_method == RQ_FILE)
+		switch (req_method) {
+		case RQ_FILE:
 			process_find_file(ss,buff,payload,payload_size);
-		if(req_method == RQ_DL)
+			break;
+		case RQ_DL:
 			process_file_download(ss,buff,payload,payload_size);
-		else if(req_method == RP_FOUND)
+			break;
+		case RP_FOUND:
 			process_file_founded(ss,buff,payload,payload_size);
-		else if(req_method == RP_NFOUND)
+			break;
+		case RP_NFOUND:
 			process_file_not_found(ss,buff,payload,payload_size);
-		else if(req_method == RP_STREAM)
+			break;
+		case RP_STREAM:
 			process_file_transfer(ss,buff,payload,payload_size);
-		else if(req_method == RQ_STREAM)
+			break;
+		case RQ_STREAM:
 			process_file_received(ss,buff,payload,payload_size);
-		else if(req_method == RQ_LOGIN)
+			break;
+		case RQ_SIGNUP:
+			processSignup(ss, buff, payload, payload_size);
+			break;
+		case RQ_LOGIN:
 			processLogin(ss, buff, payload, payload_size);
-		else if(req_method == RQ_LOGOUT)
+			break;
+		case RQ_LOGOUT:
 			processLogout(ss, buff, payload, payload_size);
-		else	
+			break;
+		default:
 			printf("None!\n");
+		}
+	}
+}
+
+void processSignup (session, buff, payload, paylen)
+Session* session;char* buff;char* payload;int paylen;
+{
+	char user_id[USER_ID_LEN + 1] = "";
+	char user_pass[PASS_LEN + 1] = "";
+
+	parseUserInfo(payload, user_id, user_pass);
+	printf("user = |%s|\n", user_id);
+	printf("pass = |%s|\n", user_pass);
+
+	if (user_id[0] == '\0' || user_pass == '\0') {
+		sendMessage(session->connfd, RP_MSG, buff, "\x1B[31m=> Signup fail! Please using command \'SIGNUP user@password\'.\x1B[0m");
+		return;
+	}
+
+	enum NewUserState new_user_state = newUser(createUser(user_id, user_pass), users, USERS);
+
+	switch (new_user_state) {
+	case SUCCESS:
+		sendMessage(session->connfd, RP_MSG, buff, "\x1B[32m=> Signup successful! Please using \'LOGIN user@password\' to login.\x1B[0m");
+		break;
+	case EXISTED:
+		sendMessage(session->connfd, RP_MSG, buff, "\x1B[31m=> Signup fail! This user existed.\x1B[0m");
+		break;
+	case FULL:
+		sendMessage(session->connfd, RP_MSG, buff, "\x1B[31m=> Signup fail! Can't create new users.\x1B[0m");
+		break;
+	default:
+		sendMessage(session->connfd, RP_MSG, buff, "\x1B[31m=> Logout fail! Something wrong.\x1B[0m");
 	}
 }
 
@@ -269,8 +316,6 @@ Session* session;char* buff;char* payload;int paylen;
 	char user_pass[PASS_LEN + 1] = "";
 
 	parseUserInfo(payload, user_id, user_pass);
-	printf("user = |%s|\n", user_id);
-	printf("pass = |%s|\n", user_pass);
 
 	if (user_id[0] == '\0' || user_pass == '\0') {
 		sendMessage(session->connfd, RP_MSG, buff, "\x1B[31m=> Logout fail! Please using command \'LOGOUT user@password\'.\x1B[0m");
@@ -307,8 +352,6 @@ Session* session;char* buff;char* payload;int paylen;
 	char user_pass[PASS_LEN + 1] = "";
 
 	parseUserInfo(payload, user_id, user_pass);
-	printf("user = |%s|\n", user_id);
-	printf("pass = |%s|\n", user_pass);
 
 	if (user_id[0] == '\0' || user_pass == '\0') {
 		sendMessage(session->connfd, RP_MSG, buff, "\x1B[31m=> Login fail! Please using command \'LOGIN user@password\'.\x1B[0m");

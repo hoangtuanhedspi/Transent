@@ -63,6 +63,7 @@ enum {
     //Notify infor
     NOTI_INF,
 
+    RQ_SIGNUP,
     RQ_LOGIN,
     RQ_LOGOUT,
 

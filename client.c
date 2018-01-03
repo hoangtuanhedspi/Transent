@@ -134,6 +134,14 @@ int local_interac(char* buff, char* payload, int sockfd){
 		printf("\x1B[31m=> Exit program!\x1B[0m\n\n");
 		exit(0);
 
+	case SIGNUP:
+		add_request(buff, RQ_SIGNUP);
+		attach_payload(buff,cmd->data,strlen(cmd->data));
+		// packet_info(buff);
+		msg_len = get_real_len(buff);
+		bytes_sent = send(sockfd, buff, msg_len, 0);
+		break;
+
 	case LOGIN:
 		add_request(buff, RQ_LOGIN);
 		attach_payload(buff,cmd->data,strlen(cmd->data));
