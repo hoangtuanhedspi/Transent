@@ -125,8 +125,8 @@ int local_interac(char* buff, char* payload, int sockfd){
 	method = valid_cmd(*cmd);
 
 	if(method == UNDEFINE){
-		loginfo("METHOD: %d\n",method);
-		exit(1);
+		printf("\x1B[31m=> Command not found! Please try \'LOGIN, LOGOUT, FIND\'.\x1B[0m\n\n");
+		return;
 	}
 
 	if (method == LOGIN) {

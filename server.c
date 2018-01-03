@@ -253,7 +253,6 @@ void process(struct pollfd *po) {
 		else if(req_method == RQ_LOGOUT)
 			processLogout(ss, buff, payload, payload_size);
 		else
-			// sendMessage(connfd, RP_MSG, buff, "\x1B[31m=> Command not found! Please try \'LOGIN, LOGOUT, FIND\'.\x1B[0m");
 			printf("None!\n");
 	}
 }
