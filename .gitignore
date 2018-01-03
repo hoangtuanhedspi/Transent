@@ -6,3 +6,4 @@ server
 *.o
 .DS_Store
 db
+clientdb/*.*
