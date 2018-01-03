@@ -228,20 +228,27 @@ void process(struct pollfd *po) {
 		closeConnection(po, ss);
 	} else {
 		req_method = parse_packet(buff,payload,&payload_size);
-		if(req_method == RQ_FILE)
-			process_find_file(ss,buff,payload,payload_size);
-		if(req_method == RQ_DL)
-			process_file_download(ss,buff,payload,payload_size);
-		else if(req_method == RP_FOUND)
-			process_file_founded(ss,buff,payload,payload_size);
-		else if(req_method == RP_NFOUND)
-			process_file_not_found(ss,buff,payload,payload_size);
-		else if(req_method == RP_STREAM)
-			process_file_transfer(ss,buff,payload,payload_size);
-		else if(req_method == RQ_STREAM)
-			process_file_received(ss,buff,payload,payload_size);
-		else	
-			printf("None!\n");
+		switch(req_method){
+			case RQ_FILE:
+				process_find_file(ss,buff,payload,payload_size);
+				break;
+			case RQ_DL:
+				process_file_download(ss,buff,payload,payload_size);
+				break;
+			case RP_FOUND:
+				process_file_founded(ss,buff,payload,payload_size);
+				break;
+			case RP_NFOUND:
+				process_file_not_found(ss,buff,payload,payload_size);
+				break;
+			case RP_STREAM:
+				process_file_transfer(ss,buff,payload,payload_size);
+				break;
+			case RQ_STREAM:
+				process_file_received(ss,buff,payload,payload_size);
+				break;
+			default: break;
+		}
 	}
 }
 
@@ -318,16 +325,33 @@ Session* session;char* buff;char* payload;int paylen;
 void process_file_transfer(session,buff,payload,paylen)
 Session* session;char* buff;char* payload;int paylen;
 {
-	//printf("Transfer file\n");
+	//RP_STREAM
+	int req_response = UNDEFINE, bytes_transfer = 0;
+	//Get meta data from header
+	char* file_name = get_meta_data(buff);
+	int uid = extract_response_number(buff);
+	char id[UID_HASH_LEN];
+	sprintf(id,"%d",uid);
+	Session * s = findSessionById(id,sessions,SESSIONS);
+	add_response_number(buff,atoi(session->id));
+	add_request(buff,RP_STREAM);
+	bytes_transfer = get_real_len(buff);
+	bytes_transfer = send(s->connfd,buff, bytes_transfer, 0);
+	if (bytes_transfer < 0)
+		perror("\nError");
+}
+
+void process_file_received(session,buff,payload,paylen)
+Session* session;char* buff;char* payload;int paylen;
+{
 	int req_response = UNDEFINE, bytes_transfer = 0;
 	char* file_name = get_meta_data(buff);
 	int uid = extract_response_number(buff);
 	char id[UID_HASH_LEN];
 	sprintf(id,"%d",uid);
-	printf("File:%s - id: %s",file_name,id);
 	Session * s = findSessionById(id,sessions,SESSIONS);
 	add_response_number(buff,atoi(session->id));
-	add_request(buff,RP_STREAM);
+	add_request(buff,RQ_STREAM);
 	bytes_transfer = get_real_len(buff);
 	bytes_transfer = send(s->connfd,buff, bytes_transfer, 0);
 	if (bytes_transfer < 0)
@@ -352,19 +376,6 @@ Session* session;char* buff;char* payload;int paylen;
 	bytes_sent = send(s->connfd,buff, bytes_sent, 0);
 	if (bytes_sent < 0)
 		perror("\nError");
-}
-
-void process_file_received(session,buff,payload,paylen)
-Session* session;char* buff;char* payload;int paylen;
-{
-	//Todo: Start download file
-	int bytes_sent = 0;
-	printf("Require next\n");
-	Cache* cache = tsalloc(Cache,sizeof(Cache));
-	memcpy(cache,payload,sizeof(Cache));
-	printf("File:%s|Des:%s->Source:%s\n",cache->file_name,session->id,cache->uid_hash);
-	Session* s = findSessionById(cache->uid_hash,sessions,SESSIONS);
-	
 }
 
 void sent_to_others(Session* session,char* buff){
