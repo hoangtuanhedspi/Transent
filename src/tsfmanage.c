@@ -81,3 +81,7 @@ Cache* list_cache_to_array(CacheList* list){
 	}
 	return res;
 }
+
+LocalCache * new_local_cache(Cache* cache,int timeout){
+    return NULL;
+}
