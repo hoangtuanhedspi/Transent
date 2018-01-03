@@ -30,12 +30,14 @@ int server_interac(char* buff, char* payload, int sockfd);
 /* Check wanna exit */
 _Bool wannaExit (char *buff);
 void sig_handler(int signum);
-int setNonblocking(int fd);
+int fd_set_blocking(int fd, int blocking);
 
 Cache *arr;
 FILE* fin;
 FILE* fout;
 struct 	pollfd polls[POLLS];
+
+int count = 0;
 
 int main(int argc, char *argv[]) {
 	int 	server_port = 0;
@@ -66,7 +68,7 @@ int main(int argc, char *argv[]) {
 
 	fprintf(stderr,"Enter command:");
 	while(1){
-		revents = poll(polls, POLLS, 20000);
+		revents = poll(polls, POLLS, 40000);
 		if (revents > 0) {
 			if (polls[0].revents & POLLIN)
 				res = local_interac(buff,payload,client_sock);
@@ -133,7 +135,6 @@ int local_interac(char* buff, char* payload, int sockfd){
 	if(method == FIND){
 		add_request(buff,RQ_FILE);
 		attach_payload(buff,cmd->data,strlen(cmd->data));
-		packet_info(buff);
 		msg_len = get_real_len(buff);
 		bytes_sent = send(sockfd, buff, msg_len, 0);
 	}
@@ -143,7 +144,6 @@ int local_interac(char* buff, char* payload, int sockfd){
 			int select = atoi(cmd->data);
 			memcpy(payload,arr+select,sizeof(Cache));
 			wrap_packet(buff,payload,sizeof(Cache),RQ_DL);
-			//add_meta_data(buff,arr[select].file_name);
 			msg_len = get_real_len(buff);
 			bytes_sent = send(sockfd, buff, msg_len, 0);
 			arr = NULL;
@@ -157,7 +157,7 @@ int local_interac(char* buff, char* payload, int sockfd){
 		printf("\nConnection closed!\n");
 		return 0;
 	}
-
+	free(cmd);
 	return 1;
 }
 
@@ -174,9 +174,11 @@ int server_interac(char* buff, char* payload,int sockfd){
 		printf("\nError!Cannot receive data from sever!\n");
 		return 0;
 	}
+
 	req_response = parse_packet(buff,payload,&bytes_transfer);
 	
 	if(req_response == RQ_FILE){
+		printf("RQ_FILE\n");
 		char* filename = detach_payload(buff);
 		if(existFile(DATA_PATH,filename)){
 			add_request(buff,RP_FOUND);
@@ -192,42 +194,49 @@ int server_interac(char* buff, char* payload,int sockfd){
 				return 0;
 		}
 		free(filename);
+	}
 
-	}else if(req_response == RP_FLIST){
-
+	if(req_response == RP_FLIST){
+		printf("RP_LIST\n");
 		int number = extract_response_number(buff);
 		arr = tsalloc(Cache,number);
 		bzero(arr,number*sizeof(Cache));
 		memcpy(arr,payload,number*sizeof(Cache));
 		printf("Select:\n");
-
 		for(int i = 0;i<number;i++)
-			printf("Client ID: %2s | File name: %20s\n",
+			printf("[%d] - Client ID: %4s | File name: %s\n",i,
 						arr[i].uid_hash,arr[i].file_name);
+	}
 
-	}else if(req_response == NOTI_INF){
+	if(req_response == NOTI_INF){
+		printf("NOTI_INF\n");
 		fprintf(stderr,"\nServer noti:%s\n",payload);
-	}else if(req_response == RP_NFOUND){
+	}
+
+	if(req_response == RP_NFOUND){
+		printf("RP_NFOUND\n");
 		fprintf(stderr,"\nServer noti:%s\n",payload);
-	}else if(req_response == RQ_DL){
+	}
+
+	if(req_response == RQ_DL){
 		printf("RQ_DL\n");
 		Cache* cache = tsalloc(Cache,sizeof(Cache));
 		memcpy(cache,payload,sizeof(Cache));
-		printf("Request file %s from %s\n",cache->file_name,cache->uid_hash);
 		int len = strlen(FILE_PATH)+strlen(cache->file_name);
     	char path[len];
 		bzero(path,len);
 		strcat(path,FILE_PATH);
 		strcat(path,cache->file_name);
-		printf("PATH:%s\n",path);
 		if(!fout)
-			fout = fopen(path,"r+b");
+			fout = fopen(path,"rb");
 		if(fout!=NULL){
-			int len = fread(payload,sizeof(char),PAY_LEN,fout);
-			if(len==-1){
+			fd_set_blocking(fileno(fout),0);
+			int len = fread(payload,1,PAY_LEN,fout);
+			if(len < 0){
 				fclose(fout);
 				return 0;
 			}else{
+				count++;
 				wrap_packet(buff,payload,len,RP_STREAM);
 				add_meta_data(buff,cache->file_name);
 				add_response_number(buff,atoi(cache->uid_hash));
@@ -238,14 +247,19 @@ int server_interac(char* buff, char* payload,int sockfd){
 					return 0;
 			}
 		}
-	}else if(req_response == RQ_STREAM){
-		printf("Send to:%d\n",extract_response_number(buff));
+		free(cache);
+	}
+	if(req_response == RQ_STREAM){
+		printf("RQ_STREAM\n");
 		if(fout){
-			int len = fread(payload,sizeof(char),PAY_LEN,fout);
-			if(len==-1){
+			bzero(payload,PAY_LEN);
+			int len = fread(payload,1,PAY_LEN,fout);
+			printf("Read:%d\n",len);
+			if(len < 0){
 				bzero(payload,PAY_LEN);
 				wrap_packet(buff,payload,0,RP_STREAM);
 				fclose(fout);
+				fout== NULL;
 			}else{
 				wrap_packet(buff,payload,len,RP_STREAM);
 			}
@@ -254,25 +268,30 @@ int server_interac(char* buff, char* payload,int sockfd){
 			if(msg_len<0)
 				return 0;
 		}
-	}else if(req_response == RP_STREAM){
-		printf("Received from:%d\n",extract_response_number(buff));
+	}
+	if(req_response == RP_STREAM){
+		printf("RP_STREAM\n");
 		if(!fin){
 			char* name = get_meta_data(buff);
 			char* file_name = tsalloc(char,FILENAME_MAX);
 			bzero(file_name,FILENAME_MAX);
 			sprintf(file_name,"%d.%s",extract_response_number(buff),name);
-			fin = fopen(file_name,"w+b");
+			fin = fopen(file_name,"wb");
+			fd_set_blocking(fileno(fin),0);
 			free(file_name);
 		}
 		if(fin){
 			if(bytes_transfer>0){
+				printf("write-%d:%dbyte/%d\n",count++,get_payload_size(buff),sizeof(payload));
 				fwrite(payload,sizeof(char),get_payload_size(buff),fin);
 				bzero(payload,PAY_LEN);
 				wrap_packet(buff,payload,0,RQ_STREAM);
 				msg_len = get_real_len(buff);
 				msg_len = send(sockfd, buff, msg_len, 0);
 			}else{
+				printf("Count:%d\n",count);
 				fclose(fin);
+				fin = NULL;
 			}
 		}
 	}
@@ -286,19 +305,15 @@ void sig_handler(int signum) {
 	exit(EXIT_SUCCESS);
 }
 
-int setNonblocking(int fd)
-{
-    int flags;
+int fd_set_blocking(int fd, int blocking) {
+    /* Save the current flags */
+    int flags = fcntl(fd, F_GETFL, 0);
+    if (flags == -1)
+        return 0;
 
-    /* If they have O_NONBLOCK, use the Posix way to do it */
-#if defined(O_NONBLOCK)
-    /* Fixme: O_NONBLOCK is defined but broken on SunOS 4.1.x and AIX 3.2.5. */
-    if (-1 == (flags = fcntl(fd, F_GETFL, 0)))
-        flags = 0;
-    return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-#else
-    /* Otherwise, use the old way of doing it */
-    flags = 1;
-    return ioctl(fd, FIOBIO, &flags);
-#endif
-}    
+    if (blocking)
+        flags &= ~O_NONBLOCK;
+    else
+        flags |= O_NONBLOCK;
+    return fcntl(fd, F_SETFL, flags) != -1;
+}
