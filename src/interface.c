@@ -38,7 +38,7 @@ struct {
 int pack(int at);
 
 void* add_request(char* buff,int method){
-    bzero(buff,HEADER_LEN);
+    bzero(buff+pack(1),PACK_SIZE);
     return memcpy(buff+pack(PACK_METHOD),&method,PACK_SIZE);
 }
 
@@ -67,6 +67,7 @@ int extract_request(char* buff){
 }
 
 int add_response_number(char* buff, int number){
+    bzero(buff+pack(PACK_WIDEN),PACK_SIZE);
     memcpy(buff+pack(PACK_WIDEN),&number,PACK_SIZE);
     return number;
 }

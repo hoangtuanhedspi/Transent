@@ -14,7 +14,7 @@ int parse_packet(char* buff,char* payload,int* size){
 int wrap_packet(char* buff,char* payload,int size,int method){
     add_request(buff,method);
     attach_payload(buff,payload,size);
-    return size+HEADER_LEN;
+    return size+HEADER_LEN+MD_LEN;
 }
 
 Var enqueue(Queue** queue,Var req_file){

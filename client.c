@@ -20,11 +20,7 @@
 #include <transent/tsfmanage.h>
 #define POLLS 2
 #define DATA_PATH "./db"
-
-typedef struct __pass{
-	Cache* cache;
-	int connfd;
-}PassArgs;
+#define FILE_PATH "./clientdb/"
 
 /* Check arguments is valid or not. If valid ip -> *serv_ip, port -> &serv_port */
 void validArguments (int argc, char *argv[], char *serv_ip, int *serv_port);
@@ -35,6 +31,7 @@ _Bool wannaExit (char *buff);
 void sig_handler(int signum);
 
 Cache *arr;
+FILE* fin, * fout;
 
 int main(int argc, char *argv[]) {
 	int 	server_port = 0;
@@ -177,7 +174,6 @@ int server_interac(char* buff, char* payload,int sockfd){
 	}
 
 	req_response = parse_packet(buff,payload,&bytes_transfer);
-	printf("Response:%d\n",req_response);
 	if(req_response == RQ_FILE){
 
 		char* filename = detach_payload(buff);
@@ -212,16 +208,36 @@ int server_interac(char* buff, char* payload,int sockfd){
 		fprintf(stderr,"\nServer noti:%s\n",payload);
 	}else if(req_response == RP_NFOUND){
 		fprintf(stderr,"\nServer noti:%s\n",payload);
-
 	}else if(req_response == RQ_DL){
-		//Create file handle thread
-		PassArgs* args = tsalloc(PassArgs,1);
 		Cache* cache = tsalloc(Cache,sizeof(Cache));
-		args->cache = cache;
-		args->connfd = sockfd;
 		memcpy(cache,payload,sizeof(Cache));
 		printf("Request file %s from %s\n",cache->file_name,cache->uid_hash);
-    	
+		int len = strlen(FILE_PATH)+strlen(cache->file_name);
+    	char path[len];
+		bzero(path,len);
+		strcat(path,FILE_PATH);
+		strcat(path,cache->file_name);
+		printf("PATH:%s\n",path);
+		if(!fout)
+			fout = open(path,"rb");
+		if(fout!=NULL){
+			int rlen = fread(payload,sizeof(char),PAY_LEN,fout);
+			//wrap_packet(buff,payload,rlen,RP_STREAM);
+			//add_response_number(buff,atoi(cache->uid_hash));
+			//add_meta_data(buff,cache->file_name);
+			//msg_len = get_real_len(buff);
+			//msg_len = send(sockfd, buff, msg_len, 0);
+			//if(msg_len<0)
+				//return 0;
+			//if (rlen == 0)
+				//fclose(fout);
+			printf("Pass:%d\n",rlen);
+		}
+		
+	}else if(req_response == RQ_STREAM){
+		printf("File Name:%s\n",get_meta_data(buff));
+	}else if(req_response == RP_STREAM){
+	
 	}
 	return 1;
 }

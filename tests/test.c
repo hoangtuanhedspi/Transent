@@ -32,10 +32,10 @@ void test_command(int argc, char* argv[]);
 
 int main(int argc, char* argv[]){
     //test_directory(argc,argv);
-    //test_interface(argc,argv);
+    test_interface(argc,argv);
     //test_poll(argc,argv);
     //test_session(argc,argv);
-    test_tsfmanage(argc,argv);
+    //test_tsfmanage(argc,argv);
     //test_haihv(argc,argv);
     //test_command(argc,argv);
     return 0;
@@ -49,6 +49,7 @@ void test_directory(int argc, char* argv[]){
 
 void test_interface(int argc, char* argv[]){
     char buff[BUFF_SIZE];
+    char payload[PAY_LEN];
     printf("==============TEST INTERFACE===============\n");
     add_request(buff,RP_STREAM);
     int i = extract_request(buff);
@@ -58,6 +59,12 @@ void test_interface(int argc, char* argv[]){
     packet_info(buff);
     assert(strcmp(get_meta_data(buff),"test.pdf")==0);
     char* pl = detach_payload(buff);
+    int len = 0;
+    parse_packet(buff,payload,&len);
+    //for(int i = 0;i<len;i++){
+        printf("Data:%s",payload);
+    //}
+    printf("\n");
     int j = 0;
     for(j = 0;j<16;j++){
         printf("decode:%d\n",buff[j]);

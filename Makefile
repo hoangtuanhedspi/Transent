@@ -44,6 +44,6 @@ server: server.c
 	$(CC) $(CFLAGS) $^ -o $@ $(LIB) $(INC)
 
 clean:
-	$(RM) -r $(BUILDDIR) $(BINDIR) test *.o client server
+	$(RM) -r $(BUILDDIR) $(BINDIR) test stest *.o client server
 	
 .PHONY: clean
