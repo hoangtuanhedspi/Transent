@@ -17,5 +17,15 @@
         "ctype.h": "c",
         "signal.h": "c"
     },
-    "files.autoSave": "onFocusChange"
+    "files.autoSave": "onFocusChange",
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "bin": true,
+        "build": true,
+        "deps": true
+    }
 }
