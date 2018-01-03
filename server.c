@@ -253,6 +253,7 @@ void process(struct pollfd *po) {
 		else if(req_method == RQ_LOGOUT)
 			processLogout(ss, buff, payload, payload_size);
 		else
+			// sendMessage(connfd, RP_MSG, buff, "\x1B[31m=> Command not found! Please try \'LOGIN, LOGOUT, FIND\'.\x1B[0m");
 			printf("None!\n");
 	}
 }
@@ -267,26 +268,31 @@ Session* session;char* buff;char* payload;int paylen;
 	printf("user = |%s|\n", user_id);
 	printf("pass = |%s|\n", user_pass);
 
+	if (user_id[0] == '\0' || user_pass == '\0') {
+		sendMessage(session->connfd, RP_MSG, buff, "\x1B[31m=> Logout fail! Please using command \'LOGOUT user@password\'.\x1B[0m");
+		return;
+	}
+
 	enum LogoutState logout_state = logout(session->connfd, user_id, user_pass, sessions, SESSIONS, users, USERS);
 
 	switch (logout_state) {
 	case LO_SUCCESS:
-		sendMessage(session->connfd, RP_LOGOUT, buff, "Logout successful!");
+		sendMessage(session->connfd, RP_MSG, buff, "\x1B[32m=> Logout successful!\x1B[0m");
 		break;
 	case LO_NOT_IDENTIFIED_USER:
-		sendMessage(session->connfd, RP_LOGOUT, buff, "Logout fail! Don't exist any user in session.");
+		sendMessage(session->connfd, RP_MSG, buff, "\x1B[31m=> Logout fail! Don't exist any user in session.\x1B[0m");
 		break;
 	case LO_WRONG_USER:
-		sendMessage(session->connfd, RP_LOGOUT, buff, "Logout fail! UserID doesn't match.");
+		sendMessage(session->connfd, RP_MSG, buff, "\x1B[31m=> Logout fail! UserID doesn't match.\x1B[0m");
 		break;
 	case LO_WRONG_PASS:
-		sendMessage(session->connfd, RP_LOGOUT, buff, "Logout fail! Wrong password.");
+		sendMessage(session->connfd, RP_MSG, buff, "\x1B[31m=> Logout fail! Wrong password.\x1B[0m");
 		break;
 	case LO_USER_BLOCKED:
-		sendMessage(session->connfd, RP_LOGOUT, buff, "Logout fail! User was blocked.");
+		sendMessage(session->connfd, RP_MSG, buff, "\x1B[31m=> Logout fail! User was blocked.\x1B[0m");
 		break;
 	default:
-		sendMessage(session->connfd, RP_LOGOUT, buff, "Logout fail! Something wrong.");
+		sendMessage(session->connfd, RP_MSG, buff, "\x1B[31m=> Logout fail! Something wrong.\x1B[0m");
 	}
 }
 
@@ -300,6 +306,11 @@ Session* session;char* buff;char* payload;int paylen;
 	printf("user = |%s|\n", user_id);
 	printf("pass = |%s|\n", user_pass);
 
+	if (user_id[0] == '\0' || user_pass == '\0') {
+		sendMessage(session->connfd, RP_MSG, buff, "\x1B[31m=> Login fail! Please using command \'LOGIN user@password\'.\x1B[0m");
+		return;
+	}
+
 	enum LoginUserState login_user_state = loginUser(session->connfd, user_id, sessions, SESSIONS, users, USERS);
 
 	switch (login_user_state) {
@@ -308,24 +319,25 @@ Session* session;char* buff;char* payload;int paylen;
 
 		if (login_pass_state == LP_SUCCESS) {
 			// Login success
-			sendMessage(session->connfd, RP_LOGIN, buff, "Login successful!");
+			sendMessage(session->connfd, RP_MSG, buff, "\x1B[32m=> Login successful!\x1B[0m");
 		} else {
 			// Wrong pass
-			sendMessage(session->connfd, RP_LOGIN, buff, "Login fail. Password is wrong.");
+			sendMessage(session->connfd, RP_MSG, buff, "\x1B[31m=> Login fail! Password is wrong.\x1B[0m");
 			removeUserFromSession(session);
 		}
 		break;
 	}
 	case LU_EXISTED_ONE_USER:
-		sendMessage(session->connfd, RP_LOGIN, buff, "Login fail. Existed another user.");
+		sendMessage(session->connfd, RP_MSG, buff, "\x1B[31m=> Login fail! Existed another user.\x1B[0m");
 		break;
 	case LU_USER_BLOCKED:
-		sendMessage(session->connfd, RP_LOGIN, buff, "Login fail. User is blocked.");
+		sendMessage(session->connfd, RP_MSG, buff, "\x1B[31m=> Login fail! User is blocked.\x1B[0m");
 		break;
 	case LU_NOT_FOUND:
-		sendMessage(session->connfd, RP_LOGIN, buff, "Login fail. User not found.");
+		sendMessage(session->connfd, RP_MSG, buff, "\x1B[31m=> Login fail! User not found.\x1B[0m");
+		break;
 	default:
-		sendMessage(session->connfd, RP_LOGIN, buff, "Login fail. Something wrong.");
+		sendMessage(session->connfd, RP_MSG, buff, "\x1B[31m=> Login fail! Something wrong.\x1B[0m");
 	}
 
 	printf("Session state: %d\n", session->state);
@@ -334,8 +346,13 @@ Session* session;char* buff;char* payload;int paylen;
 void parseUserInfo (char *user_string, char *user_id, char *user_pass) {
 	char *flag = strchr(user_string, '@');
 
-	strncpy(user_id, user_string, flag - user_string);
-	strcpy(user_pass, flag + 1);
+	if (flag == NULL) {
+		strcpy(user_id, "");
+		strcpy(user_pass, "");
+	} else {
+		strncpy(user_id, user_string, flag - user_string);
+		strcpy(user_pass, flag + 1);
+	}
 }
 
 void sendMessage (int connfd, int method, char *buff, char *msg) {

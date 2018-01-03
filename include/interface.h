@@ -64,9 +64,9 @@ enum {
     NOTI_INF,
 
     RQ_LOGIN,
-    RP_LOGIN,
     RQ_LOGOUT,
-    RP_LOGOUT
+
+    RP_MSG
 };
 
 //Undefine method

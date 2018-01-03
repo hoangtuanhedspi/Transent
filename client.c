@@ -60,7 +60,9 @@ int main(int argc, char *argv[]) {
 		return 0;
 	}
 
-	fprintf(stderr,"Enter command:");
+	// Welcome
+	fprintf(stderr, "-- Welcome to Transent --\n\n");
+
 	while(1){
 		revents = poll(polls, POLLS, 20000);
 		if (revents > 0) {
@@ -69,7 +71,8 @@ int main(int argc, char *argv[]) {
 
 			if (polls[1].revents & POLLIN)
 				res = server_interac(buff,payload,client_sock);
-			if(res==0) break;
+
+			if(res == 0) break;
 		}
 	}
 	end_process:
@@ -115,7 +118,6 @@ int local_interac(char* buff, char* payload, int sockfd){
 	int	bytes_sent 	= 0,
 		msg_len 	= 0;
 
-	printf("Enter command:");
 	bzero(payload,PAY_LEN);
 	scanf("%[^\n]",payload);
 	while(getchar()!='\n');
@@ -123,14 +125,14 @@ int local_interac(char* buff, char* payload, int sockfd){
 	method = valid_cmd(*cmd);
 
 	if(method == UNDEFINE){
-		loginfo("METHOD:%d\n",method);
+		loginfo("METHOD: %d\n",method);
 		exit(1);
 	}
 
 	if (method == LOGIN) {
 		add_request(buff, RQ_LOGIN);
 		attach_payload(buff,cmd->data,strlen(cmd->data));
-		packet_info(buff);
+		// packet_info(buff);
 		msg_len = get_real_len(buff);
 		bytes_sent = send(sockfd, buff, msg_len, 0);
 	}
@@ -138,7 +140,7 @@ int local_interac(char* buff, char* payload, int sockfd){
 	if (method == LOGOUT) {
 		add_request(buff, RQ_LOGOUT);
 		attach_payload(buff,cmd->data,strlen(cmd->data));
-		packet_info(buff);
+		// packet_info(buff);
 		msg_len = get_real_len(buff);
 		bytes_sent = send(sockfd, buff, msg_len, 0);
 	}
@@ -183,12 +185,9 @@ int server_interac(char* buff, char* payload,int sockfd){
 	}
 
 	req_response = parse_packet(buff,payload,&bytes_transfer);
-	printf("Response: %d\n", req_response);
 
-	if (req_response == RP_LOGIN) {
-		printf("\n- Response: |%s|", (char *)payload);
-	} else if (req_response == RP_LOGOUT) {
-		printf("\n- Response: |%s|", (char *)payload);
+	if (req_response == RP_MSG) {
+		printf("%s\n\n", (char *)payload);
 	} else if(req_response == RQ_FILE){
 		char* filename = detach_payload(buff);
 		if(existFile(DATA_PATH,filename)){
