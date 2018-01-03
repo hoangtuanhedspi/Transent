@@ -19,6 +19,9 @@ $ ./client <IP_SERVER> <PORT>
 ## For client
 #### Program command
 ```
+# Signup
+SIGNUP user@password
+
 # Login
 LOGIN user@password
 

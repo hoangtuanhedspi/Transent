@@ -127,7 +127,7 @@ int local_interac(char* buff, char* payload, int sockfd){
 
 	switch (method) {
 	case UNDEFINE:
-		printf("\x1B[31m=> Command not found! Please try \'LOGIN, LOGOUT, FIND\'.\x1B[0m\n\n");
+		printf("\x1B[31m=> Command not found! Please try \'SIGNUP, LOGIN, LOGOUT, FIND\'.\x1B[0m\n\n");
 		return;
 
 	case EXIT:
