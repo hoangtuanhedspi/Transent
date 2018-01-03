@@ -314,8 +314,20 @@ Session* session;char* buff;char* payload;int paylen;
 	//Todo: Transfer thread
 }
 
-void process_file_download(session,buff,payload,paylen){
+void process_file_download(session,buff,payload,paylen)
+Session* session;char* buff;char* payload;int paylen;
+{
 	//Todo: Start download file
+	int bytes_sent = 0;
+	printf("Start download\n");
+	Cache* s = tsalloc(Cache,sizeof(Cache));
+	memcpy(s,payload,sizeof(Cache));
+	printf("File:%s|Des:%s->Source:%s\n",s->file_name,session->id,s->uid_hash);
+	add_request(buff,RQ_DL);
+	attach_payload(buff,s->file_name,strlen(s->file_name));
+	bytes_sent = send(atoi(s->uid_hash),buff, bytes_sent, 0);
+	if (bytes_sent < 0)
+		perror("\nError: ");
 }
 
 void sent_to_others(Session* session,char* buff){
@@ -401,7 +413,9 @@ int process_request(CacheList* list, Request* req){
 	if(req->timeout < 0) {
 		printf("Drop timeout: %d\n",req->timeout);
 		add_request(buff,RP_NFOUND);
-		attach_payload(buff,"Can't find any file on any device!",34);
+		bzero(payload,PAY_LEN);
+		sprintf(payload,"Can't find %s on any device!",req->file_name);
+		attach_payload(buff,payload,strlen(payload));
 		bytes_sent = get_real_len(buff);
 		bytes_sent = send(req->session->connfd,buff, bytes_sent, 0);
 		if(bytes_sent<=0){
