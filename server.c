@@ -28,9 +28,6 @@ typedef struct _thread_data{
 	Queue ** req_queue;
 }PassData;
 
-Session sessions[SESSIONS];
-Queue *req_queue = NULL;
-CacheList* cache_list = NULL;
 /* Process command from client end return */
 void process(struct pollfd *po);
 void sig_handler(int signum);
@@ -95,7 +92,9 @@ void process_request_queue(CacheList* list, Queue** req);
  */
 int process_request(CacheList* list, Request* req);
 
-
+Session sessions[SESSIONS];
+Queue *req_queue = NULL;
+CacheList* cache_list = NULL;
 //Thread for countdown timeout, retain request queue
 pthread_t timeout;
 
@@ -234,7 +233,9 @@ void process(struct pollfd *po) {
 			process_file_not_found(ss,buff,payload,payload_size);
 		else if(req_method == RP_STREAM)
 			process_file_transfer(ss,buff,payload,payload_size);
-		else
+		else if(req_method == RQ_STREAM)
+			process_file_transfer(ss,buff,payload,payload_size);
+		else	
 			printf("None!\n");
 	}
 }
@@ -323,9 +324,11 @@ Session* session;char* buff;char* payload;int paylen;
 	Cache* cache = tsalloc(Cache,sizeof(Cache));
 	memcpy(cache,payload,sizeof(Cache));
 	printf("File:%s|Des:%s->Source:%s\n",cache->file_name,session->id,cache->uid_hash);
-	wrap_packet(buff,cache->file_name,strlen(cache->file_name),RQ_DL);
-	packet_info(buff);
 	Session* s = findSessionById(cache->uid_hash,sessions,SESSIONS);
+	strcpy(cache->uid_hash,session->id);
+	memcpy(payload,cache,sizeof(Cache));
+	wrap_packet(buff,payload,sizeof(Cache),RQ_DL);
+	packet_info(buff);
 	bytes_sent = get_real_len(buff);
 	bytes_sent = send(s->connfd,buff, bytes_sent, 0);
 	if (bytes_sent < 0)
@@ -394,6 +397,14 @@ void retain_request_timeout(Queue* req){
 	}
 }
 
+void retain_cache_life_time(Queue* req){
+	Queue* tmp = req;
+	while(tmp!=NULL){
+		((Request*)(tmp->data))->timeout--;
+		tmp = tmp->next;
+	}
+}
+
 void process_request_queue(CacheList* list, Queue** req){
 	Queue* tmp = *req;
 	while(tmp!=NULL){
@@ -425,7 +436,7 @@ int process_request(CacheList* list, Request* req){
 		}
 		return 1;
 	}
-
+	
 	//In time
 	CacheList* smlist = get_list_file(req,list);
 	int len = length(smlist);

@@ -9,6 +9,9 @@
 #include <transent/directory.h>
 #include <poll.h>
 #include <unistd.h>
+#include <pthread.h>
+#include <signal.h>
+#include <sys/time.h>
 
 #define DEBUG 1
 #include <transent/util.h>
@@ -24,6 +27,8 @@ int local_interac(char* buff, char* payload, int sockfd);
 int server_interac(char* buff, char* payload, int sockfd);
 /* Check wanna exit */
 _Bool wannaExit (char *buff);
+void* send_file_handle(void* data);
+void sig_handler(int signum);
 
 Cache *arr;
 
@@ -49,7 +54,7 @@ int main(int argc, char *argv[]) {
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(server_port);
 	server_addr.sin_addr.s_addr = inet_addr(server_ip);
-
+	signal(SIGINT, sig_handler);
 	if(connect(client_sock, (struct sockaddr*)&server_addr, sizeof(struct sockaddr)) < 0) {
 		printf("\nError!Can not connect to sever! Client exit imediately!\n");
 		return 0;
@@ -199,10 +204,30 @@ int server_interac(char* buff, char* payload,int sockfd){
 	}else if(req_response == RP_NFOUND){
 		fprintf(stderr,"\nServer noti:%s\n",payload);
 
-	}else if(req_response == RP_STREAM){
-		
 	}else if(req_response == RQ_DL){
-		fprintf(stderr,"Start file stream\n");
+		pthread_t file_handle;
+		//Create file handle thread
+		Cache* cache = tsalloc(Cache,sizeof(Cache));
+		memcpy(cache,payload,sizeof(Cache));
+		printf("Request file %s from %s\n",cache->file_name,cache->uid_hash);
+    	///int status = pthread_create(&file_handle, NULL, &send_file_handle, pass_data);
+		//if (status != 0) {
+		//	printf("Failed to create timer thread with status = %d\n", status);
+		//	exit(EXIT_FAILURE);
+		//}
 	}
 	return 1;
+}
+
+void* send_file_handle(void* data){
+	while(1){
+		printf("abcd\n");
+	}
+}
+
+void sig_handler(int signum) {
+    if (signum != SIGINT) {
+        printf("Received invalid signum = %d in sig_handler()\n", signum);
+    }
+	exit(EXIT_SUCCESS);
 }
