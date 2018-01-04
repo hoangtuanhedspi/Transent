@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
 	fprintf(stderr, "-- Welcome to Transent --\n\n");
 
 	while(1){
-		revents = poll(polls, POLLS, 40000);
+		revents = poll(polls, POLLS, 10000);
 		if (revents > 0) {
 			if (polls[0].revents & POLLIN)
 				res = local_interac(buff,payload,client_sock);
@@ -131,7 +131,7 @@ int local_interac(char* buff, char* payload, int sockfd){
 
 	switch (method) {
 	case UNDEFINE:
-		printf("\x1B[31m=> Command not found! Please try \'SIGNUP, LOGIN, LOGOUT, FIND\'.\x1B[0m\n\n");
+		printf("\x1B[31m=> Command not found! Please try \'SIGNUP, LOGIN, LOGOUT, FIND, SELECT\'.\x1B[0m\n\n");
 		return;
 
 	case EXIT:
@@ -229,7 +229,6 @@ int server_interac(char* buff, char* payload,int sockfd){
 	}
 
 	if(req_response == RP_FLIST){
-		printf("RP_LIST\n");
 		int number = extract_response_number(buff);
 		arr = tsalloc(Cache,number);
 		bzero(arr,number*sizeof(Cache));
@@ -241,17 +240,14 @@ int server_interac(char* buff, char* payload,int sockfd){
 	}
 
 	if(req_response == NOTI_INF){
-		printf("NOTI_INF\n");
 		fprintf(stderr,"\nServer noti:%s\n",payload);
 	}
 
 	if(req_response == RP_NFOUND){
-		printf("RP_NFOUND\n");
 		fprintf(stderr,"\nServer noti:%s\n",payload);
 	}
 
 	if(req_response == RQ_DL){
-		printf("RQ_DL\n");
 		Cache* cache = tsalloc(Cache,sizeof(Cache));
 		memcpy(cache,payload,sizeof(Cache));
 		int len = strlen(FILE_PATH)+strlen(cache->file_name);
@@ -273,7 +269,6 @@ int server_interac(char* buff, char* payload,int sockfd){
 				add_meta_data(buff,cache->file_name);
 				add_response_number(buff,atoi(cache->uid_hash));
 				msg_len = get_real_len(buff);
-				printf("Len:%d\n",msg_len);
 				msg_len = send(sockfd, buff, msg_len, 0);
 				if(msg_len<0)
 					return 0;
@@ -282,7 +277,6 @@ int server_interac(char* buff, char* payload,int sockfd){
 		free(cache);
 	}
 	if(req_response == RQ_STREAM){
-		printf("RQ_STREAM\n");
 		if(fout){
 			bzero(payload,PAY_LEN);
 			int len = fread(payload,1,PAY_LEN,fout);
@@ -302,7 +296,6 @@ int server_interac(char* buff, char* payload,int sockfd){
 		}
 	}
 	if(req_response == RP_STREAM){
-		printf("RP_STREAM\n");
 		if(!fin){
 			char* name = get_meta_data(buff);
 			char* file_name = tsalloc(char,FILENAME_MAX);
@@ -314,7 +307,7 @@ int server_interac(char* buff, char* payload,int sockfd){
 		}
 		if(fin){
 			if(bytes_transfer>0){
-				printf("write-%d:%dbyte/%d\n",count++,get_payload_size(buff),sizeof(payload));
+				printf("Write-%d:%dbyte\n",count++,get_payload_size(buff));
 				fwrite(payload,sizeof(char),get_payload_size(buff),fin);
 				bzero(payload,PAY_LEN);
 				wrap_packet(buff,payload,0,RQ_STREAM);

@@ -30,6 +30,7 @@ Cache * new_cache(char* file_name,char* uid_hash){
     if(!res) return NULL;
     strcpy(res->file_name,file_name);
     strcpy(res->uid_hash,uid_hash);
+    res->life = CACHE_LIFE_TIME;
     return res;
 }
 

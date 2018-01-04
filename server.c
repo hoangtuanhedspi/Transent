@@ -91,6 +91,8 @@ void* timeout_thread(void * data);
  */
 void retain_request_timeout(Queue* req);
 
+void retain_cache_life_time(CacheList* list);
+
 /**
  * 
  */
@@ -448,18 +450,22 @@ Session* session;char* buff;char* payload;int paylen;
 {
 	printf("on_%s\n",__func__);
 	int bytes_sent = -1;
-	if(session_size()>1){
-		Request* request = make_request(session,payload,DEFAULT_TIMEOUT);
-		//Add request find file to waitting queue
-		enqueue(&req_queue,request);
-		//Send request find file to all client
-		wrap_packet(buff,payload,paylen,RQ_FILE);
-		sent_to_others(session,buff);
+	if(session->state == AUTHENTICATED){
+		if(session_size()>1){
+			Request* request = make_request(session,payload,DEFAULT_TIMEOUT);
+			//Add request find file to waitting queue
+			enqueue(&req_queue,request);
+			//Send request find file to all client
+			wrap_packet(buff,payload,paylen,RQ_FILE);
+			sent_to_others(session,buff);
+		}else{
+			bytes_sent = wrap_packet(buff,ERR_FNF,strlen(ERR_FNF),NOTI_INF);
+			bytes_sent = send(session->connfd,buff, bytes_sent, 0);
+			if (bytes_sent < 0)
+				perror("\nError: ");
+		}
 	}else{
-		bytes_sent = wrap_packet(buff,ERR_FNF,strlen(ERR_FNF),NOTI_INF);
-		bytes_sent = send(session->connfd,buff, bytes_sent, 0);
-		if (bytes_sent < 0)
-			perror("\nError: ");
+		sendMessage(session->connfd, RP_MSG, buff, "\x1B[31m=> Please login to find file.\x1B[0m");
 	}
 }
 
@@ -467,11 +473,11 @@ void process_file_founded(session,buff,payload,paylen)
 Session* session;char* buff;char* payload;int paylen;
 {
 	printf("on_%s\n",__func__);
-	Cache* cache = new_cache(payload,session->id);
-	if(!cache_contain(cache_list,cache))
-		push_cache(cache_list,cache);
-	Request* req = make_request(session,"test.pdf",DEFAULT_TIMEOUT);
-	get_list_file(req,cache_list);
+	if(session->state = AUTHENTICATED){
+		Cache* cache = new_cache(payload,session->id);
+		if(!cache_contain(cache_list,cache))
+			push_cache(cache_list,cache);
+	}
 }
 
 
@@ -526,7 +532,6 @@ void process_file_download(session,buff,payload,paylen)
 Session* session;char* buff;char* payload;int paylen;
 {
 	printf("on_%s\n",__func__);
-	//Todo: Start download file
 	int bytes_sent = 0;
 	Cache* cache = tsalloc(Cache,sizeof(Cache));
 	memcpy(cache,payload,sizeof(Cache));
@@ -579,6 +584,7 @@ void* timeout_thread(void * data){
 	req = ((PassData*)data)->req_queue;
 	while(1){
 		retain_request_timeout(*req);
+		retain_cache_life_time(list);
 		process_request_queue(list,req);
 		sleep(1);
 	}
@@ -602,13 +608,18 @@ void retain_request_timeout(Queue* req){
 	}
 }
 
-void retain_cache_life_time(Queue* req){
-	Queue* tmp = req;
-	while(tmp!=NULL){
-		((Request*)(tmp->data))->timeout--;
-		tmp = tmp->next;
+void retain_cache_life_time(CacheList* list){
+	Node* tmp = list;
+	if(get_all_cache_size()>0){
+		while(tmp!=NULL){
+			int life = ((Cache*)(tmp->data))->life--;
+			if(life==0)
+				remove_cache(list,(Cache*)(tmp->data));
+			tmp = tmp->next;
+		}
 	}
 }
+
 
 void process_request_queue(CacheList* list, Queue** req){
 	Queue* tmp = *req;

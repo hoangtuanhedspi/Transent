@@ -30,6 +30,7 @@
 typedef struct _cache{
     char file_name[CFN_LEN];
     char uid_hash[UID_HASH_LEN];
+    int life;
 }Cache;
 
 typedef struct _local_cache{
