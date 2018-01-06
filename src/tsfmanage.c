@@ -54,7 +54,7 @@ int get_all_cache_size(){
 int compare_cache(Var des,Var res){
     if(!des || !res) return 0;
     return strcmp(((Cache*)des)->file_name,((Cache*)res)->file_name) == 0 
-           & strcmp(((Cache*)des)->uid_hash,((Cache*)res)->uid_hash) == 0;
+           && strcmp(((Cache*)des)->uid_hash,((Cache*)res)->uid_hash) == 0;
 }
 
 int remove_cache(CacheList* list,Cache* cache){
