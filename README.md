@@ -1,5 +1,5 @@
 # Transent
-A mini multicast socket file transfer software
+A mini poll blocking socket file transfer software
 
 
 ## How to build
