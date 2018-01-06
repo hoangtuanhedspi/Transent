@@ -1,7 +1,10 @@
 build
 bin
 test
+stest
 client
 server
 *.o
 .DS_Store
+db
+clientdb/*.*

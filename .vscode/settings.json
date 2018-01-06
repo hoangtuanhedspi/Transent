@@ -4,7 +4,28 @@
         "interface.h": "c",
         "tsfmanage.h": "c",
         "session.h": "c",
-        "slist.h": "c"
+        "slist.h": "c",
+        "socket.h": "c",
+        "stdlib.h": "c",
+        "e4c.h": "c",
+        "inet.h": "c",
+        "progressbar.h": "c",
+        "statusbar.h": "c",
+        "directory.h": "c",
+        "types.h": "c",
+        "poll.h": "c",
+        "ctype.h": "c",
+        "signal.h": "c"
     },
-    "files.autoSave": "onFocusChange"
+    "files.autoSave": "onFocusChange",
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "bin": true,
+        "build": true,
+        "deps": true
+    }
 }

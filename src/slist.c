@@ -25,6 +25,7 @@ Node *n_append(Node *list, Var data){
   if (list->data==NULL)
   {
     list->data = data;
+    return list;
   }
   return append(&list,data);
 }
@@ -77,6 +78,14 @@ void free_node(Node *list){
 
 Var get_data(Node *node){
   return !node ? NULL : node->data;
+}
+
+Var clone_data(Node* node){
+  if(!node) return NULL;
+  if(!node->data) return NULL;
+  Var res = malloc(sizeof(node->data));
+  memcpy(res,node->data,sizeof(node->data));
+  return res;
 }
 
 void set_data(Node *node, Var data){
@@ -135,7 +144,6 @@ int remove_data(Node **list,
 			root = &((*root)->next);
 		}
   }
-
   return position;
 }
 
@@ -143,12 +151,12 @@ Node *find_data(Node *list,
                 equal_function callback,
                 Var data){
   Node *tmp;
-	tmp=list;  
+	tmp=list;
   while(tmp!= NULL){
 		if (callback(tmp->data, data)!=0) {
       return tmp;
 		}
     tmp = tmp->next;
-	}
+  }
 	return NULL;
 }
