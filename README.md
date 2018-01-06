@@ -29,7 +29,11 @@ LOGIN user@password
 LOGOUT user@password
 
 # Find file
+FIND [file name]
 
+#Select client for transfer file
+##[0] Client id [id] | File name [file name]
+SELECT [client index number]
 # Exit
 EXIT
 ```
